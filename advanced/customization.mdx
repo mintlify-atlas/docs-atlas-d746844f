@@ -1,0 +1,274 @@
+---
+title: "Customization"
+description: "Configure banner positioning, minimap icon, timeout settings, and more"
+---
+
+## Banner Customization
+
+### Banner Position
+
+The banner position is automatically saved when you drag it to a new location and persists across game sessions.
+
+<Steps>
+  <Step title="Drag the Banner">
+    Click and hold the drag icon (📌) on the banner to move it anywhere on your screen
+  </Step>
+  <Step title="Position Saved Automatically">
+    When you release the banner, its position is saved to `NozmieDB.position`
+  </Step>
+  <Step title="Loads on Restart">
+    The banner will reappear in the same location when you reload your UI or restart the game
+  </Step>
+</Steps>
+
+<Tip>
+If you don't see the drag icon, check that **Hide Drag Icon** is disabled in Settings → Appearance.
+</Tip>
+
+### Default Position
+
+If no saved position exists, the banner defaults to:
+
+```lua
+-- Default position: above ChatFrame1
+banner:SetPoint("BOTTOM", ChatFrame1, "TOP", 0, 20)
+```
+
+This places the banner 20 pixels above your main chat frame.
+
+## Banner Appearance
+
+### Banner Dimensions
+
+The banner has fixed dimensions defined in `Config.lua`:
+
+| Property | Value |
+|----------|-------|
+| Width | 420 pixels |
+| Height | 68 pixels |
+
+### Color Scheme
+
+Nozmie uses a carefully designed color scheme that adapts based on banner state:
+
+<Accordion title="Normal State Colors">
+**Backdrop**: Dark gray-blue with 92% opacity  
+**Border**: Medium gray-blue (0.25, 0.3, 0.35)  
+**Text**: Near-white (0.95, 0.96, 1)  
+**Accent**: Blue (0.24, 0.55, 0.95)
+</Accordion>
+
+<Accordion title="Cooldown State Colors">
+**Backdrop**: Dark gray-blue with 75% opacity (more transparent)  
+**Text**: Muted gray (0.6, 0.6, 0.6)  
+Icon becomes desaturated to indicate unavailability
+</Accordion>
+
+<Accordion title="Combat State">
+When in combat, the banner dims to 20% opacity and becomes non-interactive to comply with Blizzard's combat restrictions.
+</Accordion>
+
+### Hide Drag Icon
+
+Toggle the drag handle visibility in **Settings → Appearance → Hide Drag Icon**:
+
+```lua
+hideDragIcon = false  -- Default: drag icon is visible
+```
+
+When enabled, the banner's drag button is hidden for a cleaner appearance.
+
+## Auto-Hide Settings
+
+### Enable Auto-Hide
+
+Control whether banners automatically disappear after a timeout:
+
+**Settings → Banner → Auto-hide Banner**
+
+```lua
+autoHideBanner = true  -- Default: enabled
+```
+
+When enabled, banners fade out automatically after the configured timeout period.
+
+### Banner Timeout
+
+Configure how long banners remain visible before auto-hiding:
+
+**Settings → Banner → Banner Timeout (Seconds)**
+
+| Setting | Value |
+|---------|-------|
+| Minimum | 3 seconds |
+| Maximum | 30 seconds |
+| Default | 10 seconds |
+| Increment | 1 second |
+
+```lua
+bannerTimeout = 10  -- Default: 10 seconds
+```
+
+<Note>
+Banners on cooldown will not auto-hide, allowing you to track when abilities become available again.
+</Note>
+
+### How Auto-Hide Works
+
+When a banner is shown:
+
+1. A timer starts based on `bannerTimeout` setting
+2. After the timeout expires, the banner checks if it's on cooldown
+3. If **not** on cooldown, it fades out over 0.3 seconds
+4. The banner is then hidden and removed from the display
+
+```lua
+if Settings.Get("autoHideBanner") then
+    local timeout = Settings.Get("bannerTimeout") or 10
+    banner.autoHideTimer = C_Timer.NewTimer(timeout, function()
+        if banner:IsShown() and not banner.isOnCooldown then
+            UIFrameFadeOut(banner, 0.3, 1, 0)
+            C_Timer.After(0.3, function()
+                banner:Hide()
+            end)
+        end
+    end)
+end
+```
+
+## Minimap Icon
+
+### Toggle Minimap Icon
+
+Control minimap button visibility:
+
+**Settings → Appearance → Minimap Icon**
+
+```lua
+minimapIcon = true  -- Default: enabled
+```
+
+Alternatively, use the slash command:
+
+```bash
+/noz minimap
+```
+
+### Minimap Icon Features
+
+The minimap icon provides quick access to Nozmie features:
+
+<CardGroup cols={2}>
+  <Card title="Left-Click" icon="mouse-pointer">
+    Show the last banner again
+  </Card>
+  <Card title="Right-Click" icon="mouse-pointer">
+    Open the settings panel
+  </Card>
+  <Card title="Drag" icon="hand">
+    Move the icon around the minimap
+  </Card>
+</CardGroup>
+
+### Minimap Position
+
+The icon's position around the minimap is saved automatically:
+
+```lua
+NozmieDB.minimap = {
+    minimapPos = 220,  -- Default angle position
+    hide = false       -- Visibility state
+}
+```
+
+Drag the icon to any position around the minimap edge, and it will remember your preference.
+
+## Stacked Banners
+
+When multiple utilities match a single chat message, Nozmie displays them as stacked banners.
+
+### Stack Behavior
+
+<Accordion title="How Stacking Works">
+1. Primary banner displays at your saved position
+2. Additional banners stack 76 pixels above (HEIGHT + 8px gap)
+3. Each stacked banner can be closed independently
+4. Closing a stacked banner slides remaining banners down smoothly
+</Accordion>
+
+### Stack Gap
+
+The gap between stacked banners is defined as:
+
+```lua
+local STACK_GAP = 8  -- pixels between banners
+```
+
+This creates visual separation while keeping related options grouped together.
+
+## Combat Restrictions
+
+During combat, Nozmie applies Blizzard-compliant restrictions:
+
+<Warning>
+**Combat Mode Changes**:
+- Banner opacity reduced to 20%
+- All mouse interactions disabled
+- Cannot cast spells or use items
+- Banner remains visible for informational purposes
+</Warning>
+
+When combat ends, interactivity is automatically restored:
+
+```lua
+function ApplyBannerCombatState(banner)
+    if IsCombatLocked() then
+        SetBannerInteractiveState(banner, false)
+        banner:SetAlpha(0.2)
+    else
+        SetBannerInteractiveState(banner, true)
+        banner:SetAlpha(1)
+    end
+end
+```
+
+## Navigation Arrows
+
+When multiple options are available in a single banner, navigation arrows appear below the icon:
+
+### Arrow Controls
+
+| Control | Action |
+|---------|--------|
+| Left Arrow | Previous option |
+| Right Arrow | Next option |
+| Size | 20x20 pixels |
+| Position | Below the icon, centered |
+
+### Arrow Visibility
+
+- **Single option**: Arrows are hidden
+- **Multiple options**: Arrows appear automatically
+- Arrows use standard Blizzard textures for consistency
+
+## Database Configuration
+
+All customization settings are saved in `NozmieDB`, a saved variable persisted across sessions:
+
+```lua
+NozmieDB = {
+    position = { point, relativePoint, xOfs, yOfs },
+    autoHideBanner = true,
+    bannerTimeout = 10,
+    hideDragIcon = false,
+    minimapIcon = true,
+    minimap = {
+        minimapPos = 220,
+        hide = false
+    }
+}
+```
+
+<Tip>
+These settings are character-specific. Configure each character independently for maximum flexibility.
+</Tip>

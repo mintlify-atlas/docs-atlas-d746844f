@@ -1,0 +1,489 @@
+---
+title: 'Suppression Filters'
+description: 'Control which categories of utilities and teleports Nozmie detects'
+icon: 'filter'
+---
+
+## Overview
+
+Suppression filters allow you to selectively disable detection for specific categories of utilities and teleports. This helps reduce banner spam in busy chat environments while keeping the detections you actually want.
+
+<Info>
+  Suppression filters work globally or only in instances. This gives you fine-grained control over when Nozmie responds to different types of requests.
+</Info>
+
+## Filter Types
+
+Nozmie supports two types of suppression:
+
+<CardGroup cols={2}>
+  <Card title="Global Suppressions" icon="globe">
+    Apply everywhere, including the open world and instances
+    
+    **Setting Key:** `suppressGlobalList`
+  </Card>
+  
+  <Card title="Instance Suppressions" icon="dungeon">
+    Apply only while inside instances (dungeons, raids, scenarios)
+    
+    **Setting Key:** `suppressInstanceList`
+  </Card>
+</CardGroup>
+
+## Suppression Categories
+
+The current suppression system groups utilities into four main categories:
+
+<Tabs>
+  <Tab title="Mounts">
+    ### Mounts
+    
+    **Category Key:** `"mount"`
+    
+    **Locale String:** `settings.suppress.option.mount`
+    
+    Suppresses detection of mount summons. This includes:
+    - Two-seater mounts like Sandstone Drake
+    - Vendor mounts like Traveler's Tundra Mammoth
+    - Auction House mounts like Mighty Caravan Brutosaur
+    
+    <ParamField path="actionType" type="string">
+      Matches utilities with `actionType == "mount"`
+    </ParamField>
+    
+    **Detection Logic** (from `Detector.lua:81-86`):
+    ```lua
+    local isMount = data.actionType == "mount"
+    if isMount then table.insert(keys, "mount") end
+    ```
+  </Tab>
+  
+  <Tab title="Class Utilities">
+    ### Class Utilities
+    
+    **Category Key:** `"class"`
+    
+    **Locale String:** `settings.suppress.option.class`
+    
+    Suppresses detection of class-specific utility spells. This includes:
+    - Mage teleports and portals
+    - Warlock summons and healthstones
+    - Death Knight Death Gate
+    - Druid Dreamwalk
+    - Monk Zen Pilgrimage
+    - Shaman Astral Recall
+    
+    <ParamField path="category" type="string">
+      Matches utilities with `category == "Class"` or `category == "Class Utility"`
+    </ParamField>
+    
+    **Detection Logic** (from `Detector.lua:74-86`):
+    ```lua
+    local isClass = data.category == "Class" or 
+                    data.category == "Class Utility"
+    if isClass then table.insert(keys, "class") end
+    ```
+  </Tab>
+  
+  <Tab title="Teleports">
+    ### Portals/Teleports/M+ Dungeons/Raids
+    
+    **Category Key:** `"teleports"`
+    
+    **Locale String:** `settings.suppress.option.teleports`
+    
+    Suppresses detection of all teleportation-related utilities. This includes:
+    - Mage portals and teleports
+    - M+ keystone dungeons
+    - Raid teleports
+    - Delves
+    - Hearthstones and hearthstone toys
+    
+    <ParamField path="category" type="string">
+      Matches:
+      - `category == "M+ Dungeon"`
+      - `category == "Raid"`
+      - `category == "Delve"`
+      - `category == "Home"`
+      - Spell names starting with "Portal:" or "Teleport:"
+    </ParamField>
+    
+    **Detection Logic** (from `Detector.lua:49-96`):
+    ```lua
+    local isPortal = IsPortalSpell(data)
+    local isTeleport = IsTeleport(data)
+    local isMPlus = data.category == "M+ Dungeon"
+    local isRaid = data.category == "Raid"
+    local isDelve = data.category == "Delve"
+    local isHearthstone = IsHearthstone(data)
+    
+    if isMPlus or isRaid or isTeleport or 
+       isPortal or isDelve or isHearthstone then
+        table.insert(keys, "teleports")
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Utility/Service">
+    ### Utility/Service (Mail, Repair, Transmog)
+    
+    **Category Key:** `"utilityservice"`
+    
+    **Locale String:** `settings.suppress.option.utilityservice`
+    
+    Suppresses detection of service-related utilities. This includes:
+    - Mailbox access (MOLL-E, Katy Stampwhistle)
+    - Repair NPCs (Jeeves, Auto-Hammer)
+    - Transmog access
+    - Anvil/Forge access
+    - Generic utility category items
+    
+    <ParamField path="category" type="string">
+      Matches `category == "Utility"` or destinations containing:
+      - "Repair"
+      - "Mailbox"
+      - "Anvil"
+      - "Transmog"
+    </ParamField>
+    
+    **Detection Logic** (from `Detector.lua:59-96`):
+    ```lua
+    local isUtility = data.category == "Utility"
+    local isService = IsServiceOption(data)
+    
+    function IsServiceOption(data)
+        local destination = data.destination or ""
+        return destination:find("Repair") or 
+               destination:find("Mailbox") or 
+               destination:find("Anvil") or 
+               destination:find("Transmog")
+    end
+    
+    if isUtility or isService then
+        table.insert(keys, "utilityservice")
+    end
+    ```
+  </Tab>
+</Tabs>
+
+## Configuration
+
+### Global Suppressions
+
+<ParamField path="NozmieDB.suppressGlobalList" type="table" default="{}">
+  Array of category keys to suppress everywhere
+  
+  **Example:**
+  ```lua
+  NozmieDB.suppressGlobalList = {"mount", "utilityservice"}
+  ```
+  
+  This suppresses mount and utility detections in all locations.
+</ParamField>
+
+### Instance Suppressions
+
+<ParamField path="NozmieDB.suppressInstanceList" type="table" default="{}">
+  Array of category keys to suppress only while in instances
+  
+  **Example:**
+  ```lua
+  NozmieDB.suppressInstanceList = {"teleports", "class"}
+  ```
+  
+  This suppresses teleport and class utility detections only when you're in a dungeon, raid, or scenario.
+</ParamField>
+
+## How Suppression Works
+
+The suppression logic is evaluated in `Detector.lua:68-107` for each potential match:
+
+```lua
+function ShouldSuppressOption(data, settings, inInstance)
+    -- Build list of category keys this utility matches
+    local keys = {}
+    if isMount then table.insert(keys, "mount") end
+    if isClass then table.insert(keys, "class") end
+    if isMPlus or isRaid or isTeleport or isPortal or 
+       isDelve or isHearthstone then
+        table.insert(keys, "teleports")
+    end
+    if isUtility or isService then
+        table.insert(keys, "utilityservice")
+    end
+    
+    -- Check global suppressions
+    if ShouldSuppressByList(settings.Get("suppressGlobalList"), keys) then
+        return true
+    end
+    
+    -- Check instance suppressions
+    if inInstance and 
+       ShouldSuppressByList(settings.Get("suppressInstanceList"), keys) then
+        return true
+    end
+    
+    return false
+end
+```
+
+### Instance Detection
+
+Nozmie uses `IsInInstance()` to determine if you're currently in an instance:
+
+```lua
+local inInstance = IsInInstance()
+```
+
+This returns `true` for:
+- Dungeons (Normal, Heroic, Mythic)
+- Raids
+- Scenarios
+- Arenas
+- Battlegrounds
+
+<Note>
+  Instance suppression only applies when you're physically inside an instance. Open world areas, cities, and outdoor zones use only global suppressions.
+</Note>
+
+## Legacy Settings Migration
+
+Nozmie automatically migrates from the old individual boolean settings to the new list-based system.
+
+### Old Format (Deprecated)
+
+```lua
+-- These settings are automatically migrated
+NozmieDB.suppressGlobalMount = true
+NozmieDB.suppressGlobalClass = false
+NozmieDB.suppressGlobalToy = true
+-- ... (and many more)
+
+NozmieDB.suppressInstanceMount = false
+NozmieDB.suppressInstanceClass = true
+-- ... (and many more)
+```
+
+### New Format (Current)
+
+```lua
+-- Simplified list-based configuration
+NozmieDB.suppressGlobalList = {"mount", "toy"}
+NozmieDB.suppressInstanceList = {"class"}
+```
+
+### Migration Logic
+
+From `Settings.lua:155-207`:
+
+```lua
+-- Global suppressions migration
+local migration = {
+    mount = "suppressGlobalMount",
+    class = "suppressGlobalClass",
+    toy = "suppressGlobalToy",
+    home = "suppressGlobalHome",
+    utility = "suppressGlobalUtility",
+    mplus = "suppressGlobalMPlus",
+    raid = "suppressGlobalRaid",
+    delve = "suppressGlobalDelve",
+    service = "suppressGlobalService",
+    transmog = "suppressGlobalTransmog",
+    hearthstone = "suppressGlobalHearthstone"
+}
+
+local list = {}
+for key, oldKey in pairs(migration) do
+    if NozmieDB[oldKey] then
+        table.insert(list, key)
+    end
+end
+
+if NozmieDB.suppressGlobalList == nil or 
+   (#NozmieDB.suppressGlobalList == 0 and hasLegacy) then
+    NozmieDB.suppressGlobalList = list
+end
+```
+
+<Warning>
+  The old individual boolean settings are no longer used. They're kept for backward compatibility during migration but have no effect after the first load.
+</Warning>
+
+## Configuring Suppressions
+
+### Via Settings Panel
+
+1. Open settings: **ESC** → **Options** → **Addons** → **Nozmie**
+2. Navigate to the **Suppression Filters** section
+3. Click **Global Suppressions** dropdown and select categories to suppress everywhere
+4. Click **Instance Suppressions** dropdown and select categories to suppress in instances only
+5. Settings save automatically
+
+<Info>
+  The dropdowns display a count of selected categories (e.g., "2 selected") when collapsed.
+</Info>
+
+### Programmatically
+
+```lua
+local Settings = _G.Nozmie_Settings
+
+-- Get current global suppressions
+local global = Settings.Get("suppressGlobalList")
+-- Returns: {"mount", "teleports"}
+
+-- Set new global suppressions
+Settings.Set("suppressGlobalList", {"mount", "utilityservice"})
+
+-- Get instance suppressions
+local instance = Settings.Get("suppressInstanceList")
+
+-- Set instance suppressions
+Settings.Set("suppressInstanceList", {"class"})
+
+-- Add a category to global suppressions
+local global = Settings.Get("suppressGlobalList") or {}
+table.insert(global, "teleports")
+Settings.Set("suppressGlobalList", global)
+
+-- Remove a category from instance suppressions
+local instance = Settings.Get("suppressInstanceList") or {}
+for i, category in ipairs(instance) do
+    if category == "mount" then
+        table.remove(instance, i)
+        break
+    end
+end
+Settings.Set("suppressInstanceList", instance)
+```
+
+## Common Use Cases
+
+<Tabs>
+  <Tab title="Dungeon Focus">
+    ### Dungeon Focus Mode
+    
+    Suppress all detections while in dungeons to avoid distractions:
+    
+    ```lua
+    Settings.Set("suppressInstanceList", {
+        "mount", "class", "teleports", "utilityservice"
+    })
+    ```
+    
+    <Info>
+      This keeps Nozmie active in the open world while completely silent in dungeons.
+    </Info>
+  </Tab>
+  
+  <Tab title="Service Provider">
+    ### Service Provider
+    
+    Only detect teleportation requests, suppress everything else:
+    
+    ```lua
+    Settings.Set("suppressGlobalList", {
+        "mount", "utilityservice"
+    })
+    ```
+    
+    Perfect for Mages offering portal services.
+  </Tab>
+  
+  <Tab title="Raid Support">
+    ### Raid Support
+    
+    Detect everything except mounts (too spammy in raids):
+    
+    ```lua
+    Settings.Set("suppressInstanceList", {"mount"})
+    ```
+    
+    Keeps utility and teleport detection active while reducing mount spam.
+  </Tab>
+  
+  <Tab title="Quiet Mode">
+    ### Quiet Mode
+    
+    Suppress everything globally:
+    
+    ```lua
+    Settings.Set("suppressGlobalList", {
+        "mount", "class", "teleports", "utilityservice"
+    })
+    ```
+    
+    <Warning>
+      This effectively disables all detections. Consider disabling the addon instead if you don't want any detections.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Suppression vs. Disabling
+
+**Suppression Filters** and **Disabling the Addon** serve different purposes:
+
+| Feature | Suppression Filters | Disabling Addon |
+|---------|--------------------|-----------------|
+| Chat monitoring | Active | Inactive |
+| Selective filtering | Yes | No |
+| Performance impact | Minimal | None |
+| Granular control | Per-category | All or nothing |
+| Location-aware | Yes (global/instance) | N/A |
+
+<Note>
+  Use suppression filters when you want selective control. Use the addon disable toggle (`NozmieDB.enabled`) when you want to completely stop all chat monitoring.
+</Note>
+
+## Troubleshooting
+
+### Suppressions Not Working
+
+1. Verify the suppression list contains the correct category keys
+2. Check if the utility's category matches one of the four main categories
+3. Ensure you're testing in the correct context (global vs. instance)
+
+```lua
+-- Debug current suppressions
+local Settings = _G.Nozmie_Settings
+print("Global:", table.concat(Settings.Get("suppressGlobalList") or {}, ", "))
+print("Instance:", table.concat(Settings.Get("suppressInstanceList") or {}, "))
+print("In instance:", IsInInstance())
+```
+
+### Still Seeing Detections
+
+1. The utility might match multiple categories - suppress all matching categories
+2. Check if you're in an instance - instance suppressions only apply inside instances
+3. Verify the setting was saved: `/reload` and check again
+
+### Empty Suppression Lists
+
+If your suppression lists are empty after migration:
+
+```lua
+-- Manually verify the lists
+/dump NozmieDB.suppressGlobalList
+/dump NozmieDB.suppressInstanceList
+
+-- Manually set if needed
+/run NozmieDB.suppressGlobalList = {"mount"}
+/reload
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Blacklist" icon="ban" href="/configuration/blacklist">
+    Filter messages containing specific words
+  </Card>
+  <Card title="Chat Channels" icon="comments" href="/configuration/chat-channels">
+    Configure which channels to monitor
+  </Card>
+  <Card title="Settings Overview" icon="sliders" href="/configuration/settings">
+    View all available settings
+  </Card>
+  <Card title="Supported Content" icon="wand-sparkles" href="/content/teleportation">
+    See what utilities Nozmie can detect
+  </Card>
+</CardGroup>

@@ -1,0 +1,443 @@
+---
+title: 'Slash Commands'
+description: 'Complete reference for all Nozmie slash commands'
+icon: 'terminal'
+---
+
+## Overview
+
+Nozmie provides two primary slash command aliases and several subcommands for quick access to features and settings.
+
+<CodeGroup>
+```bash Primary
+/nozmie
+```
+
+```bash Short alias
+/noz
+```
+
+```bash Utility UI
+/nozui
+```
+</CodeGroup>
+
+## Command Registration
+
+From `Init.lua:195`:
+
+```lua
+SLASH_NOZMIE1 = "/nozmie"
+SLASH_NOZMIE2 = "/noz"
+SlashCmdList["NOZMIE"] = HandleCommand
+
+SLASH_NOZUI1 = "/nozui"
+SlashCmdList["NOZUI"] = function()
+    UtilityUI.Show()
+end
+```
+
+## Settings & Configuration
+
+### Open Settings Panel
+
+<Tabs>
+  <Tab title="Command">
+    ```bash
+    /noz
+    /noz settings
+    /noz config
+    /noz options
+    ```
+  </Tab>
+  
+  <Tab title="Implementation">
+    From `Init.lua:135`:
+    ```lua
+    if cmd == "settings" or cmd == "config" or 
+       cmd == "options" or cmd == "" then
+        Settings.Show()
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Result">
+    Opens the Nozmie settings panel in the Interface Options
+  </Tab>
+</Tabs>
+
+<Info>
+  All four commands open the same settings panel. Use whichever feels most natural.
+</Info>
+
+## Blacklist Management
+
+### View Current Blacklist
+
+<Tabs>
+  <Tab title="Command">
+    ```bash
+    /noz blacklist
+    ```
+  </Tab>
+  
+  <Tab title="Implementation">
+    From `Init.lua:143`:
+    ```lua
+    elseif cmd == "blacklist" then
+        local current = Settings.Get("blacklistedWords") or ""
+        if current == "" then
+            print("|cff00ff00Nozmie:|r No blacklisted words set.")
+        else
+            print("|cff00ff00Nozmie:|r Current blacklist: |cffFFFFFF" .. 
+                  current .. "|r")
+        end
+        print("|cffFFFFFF  Usage: /noz blacklist <word1, word2, ...>")
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Output">
+    ```
+    Nozmie: Current blacklist: summon, lfg, boost
+      Usage: /noz blacklist <word1, word2, ...>
+    ```
+  </Tab>
+</Tabs>
+
+### Set Blacklist Words
+
+<Tabs>
+  <Tab title="Command">
+    ```bash
+    /noz blacklist summon, lfg, boost
+    ```
+  </Tab>
+  
+  <Tab title="Implementation">
+    From `Init.lua:137`:
+    ```lua
+    elseif cmd:match("^blacklist%s+(.+)") then
+        local words = args:match("^blacklist%s+(.+)")
+        Settings.Set("blacklistedWords", words)
+        print("|cff00ff00Nozmie:|r Blacklist updated to: |cffFFFFFF" .. 
+              words .. "|r")
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Output">
+    ```
+    Nozmie: Blacklist updated to: summon, lfg, boost
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  Blacklisted words are comma-separated. Messages containing any blacklisted word will be completely ignored by the detection system.
+</Note>
+
+## Minimap Icon
+
+### Toggle Minimap Icon
+
+<Tabs>
+  <Tab title="Command">
+    ```bash
+    /noz minimap
+    /noz mm
+    ```
+  </Tab>
+  
+  <Tab title="Implementation">
+    From `Init.lua:153`:
+    ```lua
+    elseif cmd == "minimap" or cmd == "mm" then
+        Settings.Set("minimapIcon", not Settings.Get("minimapIcon"))
+        if Minimap then
+            Minimap.UpdateVisibility()
+        end
+        local state = Settings.Get("minimapIcon") and 
+                      "enabled" or "disabled"
+        print("|cff00ff00Nozmie:|r Minimap icon " .. state .. ".")
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Output">
+    ```
+    Nozmie: Minimap icon enabled.
+    ```
+    or
+    ```
+    Nozmie: Minimap icon disabled.
+    ```
+  </Tab>
+</Tabs>
+
+<Info>
+  The minimap icon provides quick access to show the last banner. Right-click it to access settings.
+</Info>
+
+## Last Banner
+
+### Show Last Banner
+
+<Tabs>
+  <Tab title="Command">
+    ```bash
+    /noz last
+    ```
+  </Tab>
+  
+  <Tab title="Implementation">
+    From `Init.lua:162`:
+    ```lua
+    elseif cmd == "last" then
+        _G.Nozmie_ShowLastBanner()
+    end
+    
+    -- From Init.lua:53
+    _G.Nozmie_ShowLastBanner = function()
+        local last = BannerController.GetLastOptions()
+        if last and #last > 0 then
+            _G.Nozmie_ShowOptions(last)
+        else
+            print("|cff00ff00Nozmie:|r No recent banner to show.")
+        end
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Result">
+    - Shows the most recently displayed banner
+    - Useful if you closed a banner by accident
+    - Can also be triggered by clicking the minimap icon
+  </Tab>
+</Tabs>
+
+<Warning>
+  The last banner is only stored in memory during your current session. It's cleared when you reload the UI or log out.
+</Warning>
+
+## Utility UI
+
+### Open Utility Browser
+
+<Tabs>
+  <Tab title="Command">
+    ```bash
+    /nozui
+    ```
+  </Tab>
+  
+  <Tab title="Implementation">
+    From `UtilityUI.lua:679`:
+    ```lua
+    SLASH_NOZUI1 = "/nozui"
+    SlashCmdList["NOZUI"] = function()
+        UtilityUI.Show()
+    end
+    
+    function UtilityUI.Show()
+        EnsureFrame():Show()
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Result">
+    Opens the utility browser window with all your teleports, utilities, and hearthstones
+  </Tab>
+</Tabs>
+
+## Help Command
+
+### Display Command List
+
+<Tabs>
+  <Tab title="Command">
+    ```bash
+    /noz help
+    /noz ?
+    ```
+    Or any unrecognized command
+  </Tab>
+  
+  <Tab title="Implementation">
+    From `Init.lua:164`:
+    ```lua
+    else
+        print("|cff00ff00Nozmie:|r Commands:")
+        print("  /noz - Open settings")
+        print("  /noz settings - Open settings")
+        print("  /noz minimap - Toggle minimap icon")
+        print("  /noz last - Show last banner")
+        print("  /noz blacklist - View current blacklist")
+        print("  /noz blacklist <words> - Set blacklisted words (comma-separated)")
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Output">
+    ```
+    Nozmie: Commands:
+      /noz - Open settings
+      /noz settings - Open settings
+      /noz minimap - Toggle minimap icon
+      /noz last - Show last banner
+      /noz blacklist - View current blacklist
+      /noz blacklist <words> - Set blacklisted words (comma-separated)
+    ```
+  </Tab>
+</Tabs>
+
+## API Functions
+
+For addon integration or macros:
+
+### Show Banner with Options
+
+```lua
+Nozmie_ShowOptions(options)
+```
+
+<Accordion title="Parameters">
+  **options** (table): Array of teleport/utility data objects
+  
+  Example:
+  ```lua
+  local options = {
+      {
+          spellID = 556,
+          spellName = "Astral Recall",
+          destination = "Hearthstone Location",
+          category = "Home"
+      }
+  }
+  Nozmie_ShowOptions(options)
+  ```
+</Accordion>
+
+### Show Last Banner
+
+```lua
+Nozmie_ShowLastBanner()
+```
+
+From `Init.lua:53`:
+```lua
+_G.Nozmie_ShowLastBanner = function()
+    local last = BannerController.GetLastOptions()
+    if last and #last > 0 then
+        _G.Nozmie_ShowOptions(last)
+    else
+        print("|cff00ff00Nozmie:|r No recent banner to show.")
+    end
+end
+```
+
+### Toggle Utility UI
+
+```lua
+Nozmie_UtilityUI.Toggle()
+Nozmie_UtilityUI.Show()
+Nozmie_UtilityUI.Hide()
+```
+
+From `UtilityUI.lua:241`:
+```lua
+function UtilityUI.Toggle()
+    local host = EnsureFrame()
+    if host:IsShown() then
+        host:Hide()
+    else
+        host:Show()
+    end
+end
+```
+
+## Example Macros
+
+### Quick Settings Access
+
+```lua
+#showtooltip
+/noz settings
+```
+
+### Toggle Utility Browser
+
+```lua
+#showtooltip
+/nozui
+```
+
+### Show Last Banner
+
+```lua
+#showtooltip
+/noz last
+```
+
+### Blacklist Management
+
+```lua
+#showtooltip
+/noz blacklist boost, carry, summon
+```
+
+<Info>
+  All Nozmie commands can be used in macros for quick access to features.
+</Info>
+
+## Command Handler Flow
+
+From `Init.lua:132`:
+
+```lua
+local function HandleCommand(args)
+    local cmd = args:lower():trim()
+    
+    -- Settings commands
+    if cmd == "settings" or cmd == "config" or 
+       cmd == "options" or cmd == "" then
+        Settings.Show()
+    
+    -- Blacklist commands
+    elseif cmd:match("^blacklist%s+(.+)") then
+        -- Set blacklist
+    elseif cmd == "blacklist" then
+        -- View blacklist
+    
+    -- Minimap toggle
+    elseif cmd == "minimap" or cmd == "mm" then
+        -- Toggle minimap icon
+    
+    -- Last banner
+    elseif cmd == "last" then
+        -- Show last banner
+    
+    -- Help (default)
+    else
+        -- Display help text
+    end
+end
+```
+
+<Steps>
+  <Step title="Parse input">
+    Convert to lowercase and trim whitespace
+  </Step>
+  
+  <Step title="Match command">
+    Check against known command patterns
+  </Step>
+  
+  <Step title="Execute action">
+    Call appropriate function or display help
+  </Step>
+  
+  <Step title="Provide feedback">
+    Print success/error message to chat
+  </Step>
+</Steps>

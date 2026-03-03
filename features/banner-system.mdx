@@ -1,0 +1,362 @@
+---
+title: 'Banner System'
+description: 'Interactive banner UI with stacking, cooldowns, and smart behavior'
+icon: 'window-maximize'
+---
+
+## Overview
+
+The banner system is Nozmie's primary UI for presenting teleport and utility options. It features an elegant, interactive design with support for multiple options, cooldown tracking, and intelligent stacking.
+
+## Banner Appearance
+
+### Dimensions & Colors
+
+From `Config.lua:2`:
+
+```lua
+BANNER = {
+    WIDTH = 420,
+    HEIGHT = 68
+}
+
+COLORS = {
+    BACKDROP_NORMAL = {0.05, 0.06, 0.08, 0.92},
+    BACKDROP_COOLDOWN = {0.05, 0.06, 0.08, 0.75},
+    BORDER_NORMAL = {0.25, 0.3, 0.35, 0.9},
+    TEXT_NORMAL = {0.95, 0.96, 1},
+    TEXT_COOLDOWN = {0.6, 0.6, 0.6},
+    ACCENT = {0.24, 0.55, 0.95, 1}
+}
+```
+
+<Tabs>
+  <Tab title="Normal State">
+    - Dark backdrop with high opacity (0.92)
+    - Bright text color (0.95, 0.96, 1)
+    - Blue accent highlights
+    - Full icon saturation
+  </Tab>
+  
+  <Tab title="Cooldown State">
+    - Slightly transparent backdrop (0.75)
+    - Dimmed text color (0.6, 0.6, 0.6)
+    - Desaturated icon
+    - Red cooldown timer
+  </Tab>
+  
+  <Tab title="Combat State">
+    - Very transparent (0.2 alpha)
+    - Mouse interaction disabled
+    - Automatically restored when combat ends
+  </Tab>
+</Tabs>
+
+## Interactive Elements
+
+### Click Behavior
+
+<Steps>
+  <Step title="Left Click">
+    Casts the spell, uses the item, or summons the mount
+    ```lua
+    ClickBehavior.Apply(banner, {
+        closeOnRight = true,
+        closeOnLeft = true,
+        cancelAutoHide = true
+    })
+    ```
+  </Step>
+  
+  <Step title="Right Click">
+    Closes the banner
+  </Step>
+  
+  <Step title="Navigation Arrows">
+    Cycle through multiple options (shown when 2+ options available)
+    ```lua
+    banner.leftArrow:SetScript("OnClick", function()
+        banner.currentIndex = (banner.currentIndex - 2) % #banner.options + 1
+        RefreshBannerDisplay(banner)
+    end)
+    ```
+  </Step>
+</Steps>
+
+### Navigation Arrows
+
+From `BannerController.lua:328`:
+
+```lua
+local function CreateNavigationArrows(banner)
+    banner.leftArrow = CreateFrame("Button", nil, banner)
+    banner.leftArrow:SetSize(20, 20)
+    banner.leftArrow:SetPoint("TOP", banner.icon, "BOTTOM", -11, 2)
+    banner.leftArrow:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-PrevPage-Up")
+    
+    banner.rightArrow = CreateFrame("Button", nil, banner)
+    banner.rightArrow:SetSize(20, 20)
+    banner.rightArrow:SetPoint("LEFT", banner.leftArrow, "RIGHT", 2, 0)
+    banner.rightArrow:SetNormalTexture("Interface\\Buttons\\UI-SpellbookIcon-NextPage-Up")
+end
+```
+
+<Note>
+  Navigation arrows only appear when you have 2 or more matching options. They're hidden for single options.
+</Note>
+
+## Banner Stacking
+
+### How Stacking Works
+
+When a new banner appears while one is already visible, it stacks above with smooth animations:
+
+```lua
+function BannerController.ShowWithOptions(banner, teleportOptions, isStacked, allowStack)
+    if not isStacked and banner:IsShown() and allowStack then
+        banner.stack = banner.stack or {}
+        local stackedBanner = BannerUI.CreateBanner()
+        stackedBanner.stackRoot = banner
+        table.insert(banner.stack, stackedBanner)
+        
+        local anchor = GetStackAnchor(banner, #banner.stack)
+        ApplyAnchor(stackedBanner, anchor)
+    end
+end
+```
+
+### Stack Layout
+
+From `BannerController.lua:23`:
+
+```lua
+local STACK_GAP = 8
+
+local function GetStackAnchor(root, index)
+    local base = GetBaseAnchor(root)
+    return {
+        point = base.point,
+        relativeTo = base.relativeTo,
+        relativePoint = base.relativePoint,
+        xOfs = base.xOfs,
+        yOfs = base.yOfs + (Config.BANNER.HEIGHT + STACK_GAP) * index
+    }
+end
+```
+
+<Info>
+  Each stacked banner is offset by **76 pixels** (68px height + 8px gap) from the previous one.
+</Info>
+
+### Stack Promotion
+
+When the main banner is closed, the next stacked banner slides down to take its place:
+
+```lua
+local function PromoteNextBanner(root)
+    if not root.stack or #root.stack == 0 then
+        return
+    end
+    
+    local nextBanner = table.remove(root.stack, 1)
+    local baseAnchor = GetBaseAnchor(root)
+    
+    SlideToAnchor(nextBanner, baseAnchor, 0.2, function()
+        root.options = nextBanner.options
+        RefreshBannerDisplay(root)
+        ReflowStack(root)
+    end)
+end
+```
+
+<Accordion title="Animation Details">
+  - **Duration**: 0.2 seconds
+  - **Type**: Translation animation
+  - **Effect**: Smooth slide to new position
+  - **Post-animation**: Content refresh and stack reflow
+</Accordion>
+
+## Display States
+
+### Ready State
+
+From `BannerController.lua:249`:
+
+```lua
+local function UpdateBannerForReady(banner, data, totalOptions, currentIndex)
+    IconHandling.SetDesaturation(banner.icon, false)
+    banner.title:SetTextColor(unpack(Config.COLORS.TEXT_NORMAL))
+    banner:SetBackdropColor(unpack(Config.COLORS.BACKDROP_NORMAL))
+    banner.isOnCooldown = false
+    
+    local actionVerb, nounForm = Helpers.GetActionAndNoun(data)
+    local text = string.format("Teleport to %s?", data.destination)
+    banner.title:SetText(text)
+    
+    if totalOptions > 1 then
+        banner.subtitle:SetText(
+            "|cff888888Click to use • |r|cff00ff00" .. 
+            currentIndex .. "/" .. totalOptions .. 
+            "|r |cff888888• Right-click to close|r"
+        )
+    end
+end
+```
+
+### Cooldown State
+
+From `BannerController.lua:223`:
+
+```lua
+local function UpdateBannerForCooldown(banner, data, remaining)
+    IconHandling.SetDesaturation(banner.icon, true)
+    banner.title:SetTextColor(unpack(Config.COLORS.TEXT_COOLDOWN))
+    banner:SetBackdropColor(unpack(Config.COLORS.BACKDROP_COOLDOWN))
+    banner.isOnCooldown = true
+    
+    local cooldownTitle = string.format("%s is on cooldown", GetEntryName(data))
+    banner.title:SetText(cooldownTitle)
+    
+    local timeText = Helpers.FormatCooldownTime(remaining)
+    if Helpers.IsInAnyGroup() then
+        banner.subtitle:SetText("|cffff0000" .. timeText .. "|r |cff888888 - Click to announce|r")
+    else
+        banner.subtitle:SetText("|cffff0000" .. timeText .. "|r")
+    end
+end
+```
+
+<Warning>
+  When a spell is on cooldown, clicking the banner will announce the cooldown to your group instead of casting.
+</Warning>
+
+## Cooldown Tracking
+
+Banners automatically update every 0.5 seconds to track cooldowns:
+
+```lua
+banner.updateTimer = C_Timer.NewTicker(0.5, function()
+    RefreshBannerDisplay(banner)
+end)
+```
+
+<Steps>
+  <Step title="Check cooldown status">
+    Queries `Helpers.GetCooldownRemaining(data)`
+  </Step>
+  
+  <Step title="Update visual state">
+    Switches between ready/cooldown appearance
+  </Step>
+  
+  <Step title="Format time remaining">
+    Displays human-readable cooldown time
+  </Step>
+</Steps>
+
+## Auto-Hide Behavior
+
+From `BannerController.lua:465`:
+
+```lua
+if Settings.Get("autoHideBanner") then
+    local timeout = Settings.Get("bannerTimeout") or 10
+    banner.autoHideTimer = C_Timer.NewTimer(timeout, function()
+        if banner:IsShown() and not banner.isOnCooldown then
+            UIFrameFadeOut(banner, 0.3, 1, 0)
+            C_Timer.After(0.3, function()
+                banner:Hide()
+            end)
+        end
+    end)
+end
+```
+
+<Tabs>
+  <Tab title="Default Behavior">
+    - Auto-hide enabled by default
+    - 10 second timeout
+    - Smooth fade-out animation (0.3s)
+    - Does NOT hide if spell is on cooldown
+  </Tab>
+  
+  <Tab title="Configuration">
+    Adjust in settings:
+    - Toggle auto-hide on/off
+    - Set timeout from 3-30 seconds
+    - Access via `/noz settings`
+  </Tab>
+</Tabs>
+
+## Combat Lockdown
+
+### State Management
+
+From `BannerController.lua:28`:
+
+```lua
+local function ApplyBannerCombatState(banner)
+    if IsCombatLocked() then
+        SetBannerInteractiveState(banner, false)
+        banner:SetAlpha(0.2)
+        banner.nozmieCombatDimmed = true
+    else
+        SetBannerInteractiveState(banner, true)
+        if banner.nozmieCombatDimmed then
+            banner:SetAlpha(1)
+            banner.nozmieCombatDimmed = false
+        end
+    end
+end
+```
+
+### Combat Watcher
+
+```lua
+combatWatcher = CreateFrame("Frame")
+combatWatcher:RegisterEvent("PLAYER_REGEN_DISABLED")
+combatWatcher:RegisterEvent("PLAYER_REGEN_ENABLED")
+combatWatcher:SetScript("OnEvent", function()
+    RefreshTrackedBannerCombatState()
+end)
+```
+
+<Info>
+  All banners automatically dim to 20% opacity during combat and restore when combat ends. This prevents taint issues while keeping the UI visible.
+</Info>
+
+## Duplicate Detection
+
+Nozmie prevents duplicate banners from appearing:
+
+```lua
+function BannerController.FindBannerByOptions(root, options)
+    local optionsKey = BuildOptionsKey(options)
+    if GetBannerOptionsKey(root) == optionsKey then
+        return root
+    end
+    if root.stack then
+        for _, frame in ipairs(root.stack) do
+            if GetBannerOptionsKey(frame) == optionsKey then
+                return frame
+            end
+        end
+    end
+    return nil
+end
+```
+
+From `Init.lua:119`:
+
+```lua
+local existingBanner = BannerController.FindBannerByOptions(banner, matches)
+if existingBanner then
+    -- Refresh existing banner instead of creating new one
+    BannerController.ShowWithOptions(existingBanner, matches, isStacked, false)
+    return
+end
+```
+
+<Note>
+  If you receive the same request multiple times, Nozmie will refresh the existing banner instead of stacking duplicates.
+</Note>

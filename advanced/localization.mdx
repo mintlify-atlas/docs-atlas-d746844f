@@ -1,0 +1,173 @@
+---
+title: "Localization"
+description: "Multi-language support and how localization works in Nozmie"
+---
+
+## Supported Languages
+
+Nozmie supports 9 languages out of the box, automatically detecting your WoW client's locale:
+
+<CardGroup cols={3}>
+  <Card title="English" icon="globe">
+    enUS
+  </Card>
+  <Card title="German" icon="globe">
+    deDE
+  </Card>
+  <Card title="Spanish" icon="globe">
+    esES
+  </Card>
+  <Card title="French" icon="globe">
+    frFR
+  </Card>
+  <Card title="Russian" icon="globe">
+    ruRU
+  </Card>
+  <Card title="Korean" icon="globe">
+    koKR
+  </Card>
+  <Card title="Portuguese" icon="globe">
+    ptBR
+  </Card>
+  <Card title="Simplified Chinese" icon="globe">
+    zhCN
+  </Card>
+  <Card title="Traditional Chinese" icon="globe">
+    zhTW
+  </Card>
+</CardGroup>
+
+## How Localization Works
+
+Nozmie's localization system consists of three main components:
+
+### 1. Automatic Locale Detection
+
+The addon automatically detects your game client's locale when it loads:
+
+```lua
+function Locale.GetLocale()
+    return GetLocale() or "enUS"
+end
+```
+
+This means you don't need to configure anything - Nozmie will use the appropriate language files based on your WoW client settings.
+
+### 2. Localized String Lookup
+
+All UI text, messages, and tooltips are stored in locale files located in `Locales/`:
+
+- `Locales/enUS.lua` - English (fallback)
+- `Locales/deDE.lua` - German
+- `Locales/esES.lua` - Spanish
+- `Locales/frFR.lua` - French
+- `Locales/ruRU.lua` - Russian
+- `Locales/koKR.lua` - Korean
+- `Locales/ptBR.lua` - Portuguese
+- `Locales/zhCN.lua` - Simplified Chinese
+- `Locales/zhTW.lua` - Traditional Chinese
+
+<Note>
+If a translation is missing in your locale, Nozmie automatically falls back to English (enUS) to ensure the addon remains functional.
+</Note>
+
+### 3. Keyword Aliases
+
+Nozmie supports localized keywords for detecting utility requests in chat. Each locale file can define custom keywords that match regional terminology:
+
+```lua
+keywordsByName = {
+    ["Portal: Darnassus"] = {"darnassus", "darn"},
+    ["Teleport: Stormwind"] = {"stormwind", "sw"},
+    -- ... more keywords
+}
+```
+
+This allows the addon to understand chat messages in your language, such as:
+- "need port to org" (English)
+- "brauche portal nach orgrimmar" (German)
+- "necesito portal a ventormenta" (Spanish)
+
+## Localized Features
+
+### Settings Panel
+
+All settings options, tooltips, and section headers are localized:
+
+<Accordion title="Example Localized Settings">
+- **English**: "Enable Nozmie" → "Enable or disable utility detection"
+- **German**: "Nozmie aktivieren" → "Aktiviert oder deaktiviert die Utility-Erkennung"
+- **Spanish**: "Activar Nozmie" → "Activar o desactivar la detección de utilidades"
+</Accordion>
+
+### Banner Text
+
+Banner titles, subtitles, and action prompts display in your language:
+
+| Element | English | German | Spanish |
+|---------|---------|--------|---------|
+| Click to teleport | Click to teleport | Klicken zum Teleportieren | Haz clic para teletransportar |
+| Right-click to close | Right-click to close | Rechtsklick zum Schließen | Clic derecho para cerrar |
+
+### Chat Announcements
+
+When announcing to your group, messages use localized text:
+
+```lua
+-- English
+"I can teleport to Stormwind!"
+
+-- German
+"Ich kann nach Sturmwind teleportieren!"
+
+-- Spanish
+"¡Puedo teletransportarme a Ventormenta!"
+```
+
+## Chat Detection Limitations
+
+<Warning>
+Nozmie currently uses English keywords for detecting dungeon names and some location names in chat. Full localized dungeon name detection is on the roadmap for future updates.
+</Warning>
+
+The addon will still work in non-English clients, but some location-based keywords may need to be in English for detection to work properly.
+
+## Fallback System
+
+Nozmie implements a robust fallback system to ensure the addon never breaks due to missing translations:
+
+<Steps>
+  <Step title="Check Current Locale">
+    First, look for the string in your current locale (e.g., deDE for German)
+  </Step>
+  <Step title="Fall Back to English">
+    If not found, retrieve the string from the English (enUS) locale
+  </Step>
+  <Step title="Use Key as Fallback">
+    If still not found, display the key itself to prevent errors
+  </Step>
+</Steps>
+
+```lua
+function Locale.GetString(key, fallback)
+    local locale = Locale.GetLocale()
+    local data = GetLocaleTable(locale)
+    local strings = data.strings or {}
+    local value = strings[key]
+    if value == nil then
+        local en = Nozmie_Locales["enUS"]
+        value = en and en.strings and en.strings[key] or nil
+    end
+    return value or fallback or key
+end
+```
+
+This ensures Nozmie remains functional even if translations are incomplete.
+
+## Contributing Translations
+
+Want to help improve Nozmie's localization? Contributions are welcome!
+
+<Tip>
+Check the [CONTRIBUTING.md](https://github.com/YOUR_REPO/nozmie/blob/main/CONTRIBUTING.md) file in the repository for guidelines on submitting translations for new languages or improving existing ones.
+</Tip>

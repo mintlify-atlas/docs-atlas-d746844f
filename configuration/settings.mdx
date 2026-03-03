@@ -1,0 +1,226 @@
+---
+title: 'Settings Overview'
+description: 'Complete guide to Nozmie settings and configuration options'
+icon: 'sliders'
+---
+
+## Accessing Settings
+
+Nozmie settings can be accessed through multiple methods:
+
+- Press **ESC** → **Options** → **Addons** → **Nozmie**
+- Use the `/noz` slash command
+- Use the `/noz settings` command
+- Right-click the minimap icon (if enabled)
+
+<Info>
+  All settings are automatically saved to your character's saved variables and persist across game sessions.
+</Info>
+
+## Settings Database
+
+Nozmie stores all configuration in the `NozmieDB` table, which is initialized automatically when the addon loads. Settings are character-specific and include default values for all options.
+
+### Default Values
+
+When Nozmie first loads, it initializes the following defaults:
+
+<ParamField path="enabled" type="boolean" default="true">
+  Master toggle for the entire addon
+</ParamField>
+
+<ParamField path="showBanner" type="boolean" default="true">
+  Display the teleport banner when matches are found
+</ParamField>
+
+<ParamField path="preferPortals" type="boolean" default="true">
+  Prioritize portals over teleports when both match
+</ParamField>
+
+<ParamField path="autoHideBanner" type="boolean" default="true">
+  Automatically hide banner after timeout period
+</ParamField>
+
+<ParamField path="hideDragIcon" type="boolean" default="false">
+  Hide the drag handle icon on the banner
+</ParamField>
+
+<ParamField path="minimapIcon" type="boolean" default="true">
+  Show minimap icon for quick access
+</ParamField>
+
+<ParamField path="bannerTimeout" type="number" default="10">
+  Seconds to display banner before auto-hiding (3-30 range)
+</ParamField>
+
+<ParamField path="announceToGroup" type="boolean" default="false">
+  Announce to group when casting utility spells, mounts, repair, mail, etc.
+</ParamField>
+
+## General Settings
+
+The General section contains the master toggle and core functionality.
+
+### Enable Nozmie
+
+<ParamField path="NozmieDB.enabled" type="boolean" default="true">
+  **Setting Key:** `enabled`
+  
+  Enable or disable teleport detection. When disabled, Nozmie will not monitor chat or respond to teleport requests.
+</ParamField>
+
+<Warning>
+  Disabling this setting stops all chat monitoring and detection. The addon will remain loaded but inactive.
+</Warning>
+
+## Banner Settings
+
+Control how the teleport banner appears and behaves.
+
+### Show Banner
+
+<ParamField path="NozmieDB.showBanner" type="boolean" default="true">
+  **Setting Key:** `showBanner`
+  
+  Display the teleport banner when matches are found in chat. When disabled, Nozmie will still detect teleport requests but won't show the banner UI.
+</ParamField>
+
+### Prefer Portals
+
+<ParamField path="NozmieDB.preferPortals" type="boolean" default="true">
+  **Setting Key:** `preferPortals`
+  
+  Prioritize portals over teleports when both match. Applies to Mage spells where both portal and teleport versions exist for the same destination.
+</ParamField>
+
+### Announce to Group
+
+<ParamField path="NozmieDB.announceToGroup" type="boolean" default="false">
+  **Setting Key:** `announceToGroup`
+  
+  Announce to your group when you cast utility spells, summon mounts, use repair NPCs, mailboxes, etc. The announcement format is "[Nozmie] Using/Casting/Summoning [utility name]!"
+</ParamField>
+
+### Auto-hide Banner
+
+<ParamField path="NozmieDB.autoHideBanner" type="boolean" default="true">
+  **Setting Key:** `autoHideBanner`
+  
+  Automatically hide the banner after the timeout period expires. When disabled, banners remain visible until manually closed.
+</ParamField>
+
+### Banner Timeout
+
+<ParamField path="NozmieDB.bannerTimeout" type="number" default="10">
+  **Setting Key:** `bannerTimeout`
+  
+  How long to display the banner before auto-hiding, in seconds. Valid range is 3-30 seconds. Displayed as a slider in the settings panel.
+</ParamField>
+
+## Appearance Settings
+
+Customize the visual elements of Nozmie.
+
+### Hide Drag Icon
+
+<ParamField path="NozmieDB.hideDragIcon" type="boolean" default="false">
+  **Setting Key:** `hideDragIcon`
+  
+  Hide the drag handle icon on the banner. The banner can still be moved by dragging anywhere on the frame.
+</ParamField>
+
+### Minimap Icon
+
+<ParamField path="NozmieDB.minimapIcon" type="boolean" default="true">
+  **Setting Key:** `minimapIcon`
+  
+  Show a minimap icon for reopening the last banner. The icon also provides quick access to settings via right-click.
+</ParamField>
+
+<Note>
+  Toggling the minimap icon updates the visibility immediately without requiring a reload.
+</Note>
+
+### Minimap Position
+
+<ParamField path="NozmieDB.minimap.minimapPos" type="number" default="220">
+  **Setting Key:** `minimap.minimapPos`
+  
+  Angular position of the minimap icon (0-360 degrees). This value is automatically saved when you drag the icon.
+</ParamField>
+
+## Banner Position
+
+The banner position is automatically saved when you drag it to a new location.
+
+<ParamField path="NozmieDB.position" type="table">
+  Stores the banner's anchor point information:
+  - `point` - Anchor point on the banner frame
+  - `relativePoint` - Anchor point on UIParent
+  - `xOfs` - Horizontal offset from anchor
+  - `yOfs` - Vertical offset from anchor
+</ParamField>
+
+<Info>
+  The default position is `BOTTOM` of ChatFrame1, offset by (0, 20). Position is saved automatically when you move the banner.
+</Info>
+
+## Settings API
+
+Nozmie uses the modern Settings API introduced in WoW 10.0. Settings are registered with the game's built-in settings panel.
+
+### Accessing Settings Programmatically
+
+```lua
+local Settings = _G.Nozmie_Settings
+
+-- Get a setting value
+local enabled = Settings.Get("enabled")
+local timeout = Settings.Get("bannerTimeout")
+
+-- Set a setting value
+Settings.Set("enabled", true)
+Settings.Set("bannerTimeout", 15)
+
+-- Open settings panel
+Settings.Show()
+```
+
+### Settings Module Functions
+
+<ParamField path="SettingsModule.InitializeDB()" type="function">
+  Initializes the NozmieDB table with default values. Called automatically on addon load.
+</ParamField>
+
+<ParamField path="SettingsModule.Get(key)" type="function">
+  Retrieves a setting value by key. Returns the value or nil if not found.
+</ParamField>
+
+<ParamField path="SettingsModule.Set(key, value)" type="function">
+  Sets a setting value by key. Updates NozmieDB immediately.
+</ParamField>
+
+<ParamField path="SettingsModule.CreatePanel()" type="function">
+  Creates the settings panel UI using the Settings API. Called once during initialization.
+</ParamField>
+
+<ParamField path="SettingsModule.Show()" type="function">
+  Opens the Nozmie settings panel in the game's options interface.
+</ParamField>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Chat Channels" icon="comments" href="/configuration/chat-channels">
+    Configure which chat channels Nozmie monitors
+  </Card>
+  <Card title="Suppression Filters" icon="filter" href="/configuration/suppression-filters">
+    Control which categories of utilities are detected
+  </Card>
+  <Card title="Blacklist" icon="ban" href="/configuration/blacklist">
+    Filter messages containing specific words
+  </Card>
+  <Card title="Banner System" icon="window" href="/features/banner-system">
+    Learn about banner features and interactions
+  </Card>
+</CardGroup>

@@ -1,0 +1,76 @@
+{
+  "projectType": "general",
+  "projectName": "Nozmie",
+  "projectDescription": "A World of Warcraft addon that intelligently detects teleport and utility requests from chat and provides one-click casting.",
+  "theme": "maple",
+  "primaryColor": "#8B5CF6",
+  "lightColor": "#A78BFA",
+  "darkColor": "#6D28D9",
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting Started",
+        "pages": [
+          "introduction",
+          "installation",
+          "quickstart"
+        ]
+      },
+      {
+        "group": "Core Features",
+        "pages": [
+          "features/chat-detection",
+          "features/banner-system",
+          "features/utility-page",
+          "features/commands"
+        ]
+      },
+      {
+        "group": "Configuration",
+        "pages": [
+          "configuration/settings",
+          "configuration/chat-channels",
+          "configuration/suppression-filters",
+          "configuration/blacklist"
+        ]
+      },
+      {
+        "group": "Supported Content",
+        "pages": [
+          "content/teleportation",
+          "content/class-utilities",
+          "content/items-and-toys",
+          "content/special-services"
+        ]
+      },
+      {
+        "group": "Advanced",
+        "pages": [
+          "advanced/localization",
+          "advanced/customization",
+          "advanced/troubleshooting"
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Smart chat detection with keyword matching",
+    "One-click interactive banner for instant casting",
+    "Utility page browser with search functionality",
+    "Comprehensive teleport support (M+ dungeons, raids, portals)",
+    "Class utility detection (buffs, summons, resurrection)",
+    "Instance-aware suppression filters",
+    "Multi-language support (9 languages)",
+    "Portal prioritization and stacking banners"
+  ],
+  "publicApiSurface": [
+    "/noz or /nozmie - Open settings panel",
+    "/noz utility - Open utility page browser",
+    "/noz minimap - Toggle minimap icon",
+    "/noz last - Display last banner",
+    "/noz blacklist - Manage blacklisted words",
+    "Chat detection: Say, Party, Raid, Guild, Whisper, Battle.net",
+    "Nozmie_ShowOptions(options) - Show banner programmatically",
+    "Nozmie_ShowLastBanner() - Re-show last banner"
+  ]
+}

@@ -1,0 +1,153 @@
+---
+title: "Introduction to Nozmie"
+description: "A smart World of Warcraft addon that detects teleport and utility requests from chat and provides instant one-click casting"
+---
+
+## What is Nozmie?
+
+Nozmie is an intelligent World of Warcraft addon that automatically detects teleport, portal, and utility requests from chat messages and displays an interactive banner for instant one-click casting or item usage. It eliminates the hassle of manually targeting players and searching through your spellbook or bags.
+
+<CardGroup cols={2}>
+  <Card title="Smart Chat Detection" icon="comments" iconType="duotone">
+    Automatically scans Say, Party, Raid, Guild, Whisper, and Battle.net messages for teleport and utility requests
+  </Card>
+  
+  <Card title="One-Click Banner" icon="hand-pointer" iconType="duotone">
+    Instantly cast spells or use items with cooldown feedback and optional group announcements
+  </Card>
+  
+  <Card title="Utility Page Browser" icon="grid" iconType="duotone">
+    Browse all your available teleports, portals, utilities, and hearthstones through an organized tabbed interface
+  </Card>
+  
+  <Card title="Instance-Aware" icon="dungeon" iconType="duotone">
+    Different suppression filter settings for dungeons, raids, and open world content
+  </Card>
+</CardGroup>
+
+## Key Features
+
+### Intelligent Detection
+
+- **Whole-word pattern matching** prevents false positives ("portal" won't match "portable")
+- **Multi-select chat channels** to monitor via the settings panel
+- **Player targeting** automatically targets the player who made the request
+- **Persistent blacklist** to exclude messages containing specific words
+
+### Smart Banner System
+
+- **Stacked banners** display multiple options when several matches are found
+- **Portal prioritization** optionally prioritize portal spells over regular teleports
+- **Cooldown tracking** with visual feedback on spell icons
+- **Auto-hide timeout** configurable banner duration
+- **Position persistence** banner position is saved between sessions
+
+### Utility Page UI
+
+Access with `/noz utility` to browse all available content:
+
+- **Current Dungeons**: Mythic+ dungeons currently in rotation
+- **Legacy Dungeons**: Mythic+ dungeons from previous seasons
+- **Teleports**: Raid teleports, Delve access, and teleportation toys
+- **Utility**: Utility spells and services (buffs, summons, repairs, etc.)
+- **Hearthstone**: All hearthstone items and variants you own
+
+<Info>
+  The Utility Page features a search bar for quick filtering and displays real-time cooldown timers on spell icons.
+</Info>
+
+## Supported Content
+
+<CardGroup cols={2}>
+  <Card title="Teleportation" icon="portal-enter" iconType="duotone">
+    M+ dungeon teleports (including Midnight!), raid teleports, mage portals, and hearthstones
+  </Card>
+  
+  <Card title="Class Utilities" icon="wand-sparkles" iconType="duotone">
+    Mage refreshments, warlock summoning, priest buffs, and resurrection spells
+  </Card>
+  
+  <Card title="Items & Toys" icon="treasure-chest" iconType="duotone">
+    Teleportation toys, portal generators, repair mounts, and auction mounts
+  </Card>
+  
+  <Card title="Special Services" icon="wrench" iconType="duotone">
+    Repair bots, mailbox access, transmog pedestals, and portable anvils
+  </Card>
+</CardGroup>
+
+## How It Works
+
+<Steps>
+  <Step title="Chat Monitoring">
+    Nozmie listens to your configured chat channels and analyzes messages for keywords matching known spells and items.
+  </Step>
+  
+  <Step title="Keyword Matching">
+    Uses intelligent whole-word detection to find exact matches and prevent false positives.
+  </Step>
+  
+  <Step title="Availability Check">
+    Verifies that you own the spell, item, or toy before displaying it in the banner or utility page.
+  </Step>
+  
+  <Step title="Banner Display">
+    Shows a classic WoW-style dialog banner with the matched option(s) and their icons.
+  </Step>
+  
+  <Step title="One-Click Action">
+    Click the banner or utility page item to instantly cast the spell or use the item.
+  </Step>
+</Steps>
+
+<Note>
+  Nozmie only displays actions you can actually perform - owned spells, items, or toys. This keeps your interface clean and relevant.
+</Note>
+
+## Customization Options
+
+### Suppression Filters
+
+Control what appears in your banners:
+
+- **Mounts** - Hide mount-related utilities
+- **Class Utilities** - Suppress class-specific buffs and services
+- **Teleports & Portals** - Filter out teleportation options
+- **Utility Services** - Hide repair, mailbox, anvil, and transmog options
+
+### Instance-Specific Settings
+
+Apply different filters for:
+- Open world content
+- Dungeons (including Mythic+)
+- Raid encounters
+
+<Info>
+  Use instance filters to hide unwanted categories in dungeons/raids while keeping them visible in the open world.
+</Info>
+
+## Multi-Language Support
+
+Nozmie supports 9 languages:
+
+- English (enUS)
+- German (deDE)  
+- Spanish (esES)
+- French (frFR)
+- Russian (ruRU)
+- Simplified Chinese (zhCN)
+- Traditional Chinese (zhTW)
+- Korean (koKR)
+- Portuguese (ptBR)
+
+## Get Started
+
+<CardGroup cols={2}>
+  <Card title="Installation" icon="download" href="/installation">
+    Learn how to install Nozmie in World of Warcraft
+  </Card>
+  
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running with Nozmie in minutes
+  </Card>
+</CardGroup>

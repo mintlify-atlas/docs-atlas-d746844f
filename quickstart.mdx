@@ -1,80 +1,360 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quick Start Guide"
+description: "Get started using Nozmie in minutes with real examples and practical tips"
 ---
 
-## Get started in three steps
+## Your First Steps with Nozmie
 
-Get your documentation site running locally and make your first customization.
+This guide will walk you through using Nozmie for the first time, from basic setup to casting your first spell.
 
-### Step 1: Set up your local environment
+<Note>
+  Before starting, make sure you've [installed Nozmie](/installation) and can see the minimap icon in-game.
+</Note>
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
+## Step 1: Open the Settings
+
+First, let's familiarize ourselves with the Nozmie interface.
+
+<Steps>
+  <Step title="Access Settings">
+    Type `/noz` or `/nozmie` in chat to open the settings panel.
     
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
+    Alternatively, click the Nozmie minimap icon.
+  </Step>
+  
+  <Step title="Verify Addon is Enabled">
+    In the settings panel, ensure the "Enable Nozmie" checkbox is checked.
     
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
+    This is the master toggle for all addon functionality.
+  </Step>
+  
+  <Step title="Configure Chat Channels">
+    Select which chat channels Nozmie should monitor:
+    - **Say** - Local /say messages
+    - **Party** - Party chat
+    - **Raid** - Raid chat  
+    - **Guild** - Guild chat
+    - **Whisper** - Direct whispers
+    - **Battle.net Whisper** - Cross-realm whispers
     
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
+    <Info>
+      Start by enabling **Party** and **Raid** channels for group content.
+    </Info>
+  </Step>
+</Steps>
+
+## Step 2: Test Chat Detection
+
+Now let's see Nozmie in action by testing the chat detection system.
+
+### Example 1: Teleportation Request
+
+If you're a class with teleportation abilities (Mage, Druid, Monk, Death Knight, etc.):
+
+<Steps>
+  <Step title="Type a Test Message">
+    In /say or /party chat, type a message containing a dungeon or location name:
+    
+    ```
+    Can someone port to Dornogal?
+    ```
+    
+    ```  
+    Need teleport to Ara-Kara
+    ```
+  </Step>
+  
+  <Step title="Watch for the Banner">
+    A banner will appear on your screen showing available teleport options.
+    
+    The banner displays:
+    - Spell/item icon
+    - Destination name
+    - Category (M+ Dungeon, Raid, etc.)
+    - Cooldown status
+  </Step>
+  
+  <Step title="Click to Cast">
+    Click the banner to instantly cast the spell or use the item.
+    
+    Nozmie will automatically target the requesting player if applicable.
+  </Step>
+</Steps>
+
+<Note>
+  The banner auto-hides after a configurable timeout (default: 10 seconds). You can adjust this in settings or recall the last banner with `/noz last`.
+</Note>
+
+### Example 2: Utility Request
+
+If you can provide buffs or utilities (any class):
+
+<CodeGroup>
+```text Mage Examples
+Can I get food?
+Need int buff
+Can someone slowfall me?
+```
+
+```text Warlock Examples  
+Summon please
+Need soulwell
+Can I get a stone?
+```
+
+```text Priest Examples
+Buff please
+Need fort
+Can someone levitate?
+```
+</CodeGroup>
+
+When you or a party member types these messages, Nozmie displays the appropriate utility spells you can cast.
+
+## Step 3: Use the Utility Page
+
+The Utility Page is a browsable interface for all your available teleports, portals, and utilities.
+
+<Steps>
+  <Step title="Open Utility Page">
+    Type `/noz utility` in chat to open the Utility Page.
+  </Step>
+  
+  <Step title="Browse Tabs">
+    Explore the organized tabs:
+    
+    - **Current Dungeons** - M+ dungeons in the current season (priority teleports)
+    - **Legacy Dungeons** - Previous season M+ dungeons  
+    - **Teleports** - Raid teleports, Delve access, and teleportation toys
+    - **Utility** - Class utilities, buffs, summons, repair bots, etc.
+    - **Hearthstone** - All your hearthstone items and variants
+  </Step>
+  
+  <Step title="Use the Search Bar">
+    Click the search bar and type a location or spell name:
+    
+    ```
+    dalaran
+    ```
+    
+    The grid filters in real-time to show matching items across all tabs.
+  </Step>
+  
+  <Step title="Click to Cast">
+    Click any icon to instantly cast that spell or use that item.
+    
+    Icons display cooldown timers when abilities are on cooldown.
+  </Step>
+</Steps>
+
+<Info>
+  The Utility Page only shows items and spells you actually own and can use - keeping your interface clean and relevant.
+</Info>
+
+## Step 4: Customize Your Experience
+
+Tailor Nozmie to your playstyle with these essential settings.
+
+### Configure Suppression Filters
+
+Control what appears in your banners:
+
+<Steps>
+  <Step title="Open Settings">
+    Type `/noz` to open the settings panel.
+  </Step>
+  
+  <Step title="Set Global Filters">
+    Under "Global Suppression," select categories to hide everywhere:
+    - **Mounts** - Hide mount-related utilities
+    - **Class Utilities** - Suppress class buffs and services
+    - **Teleports & Portals** - Filter teleportation options
+    - **Utility Services** - Hide repair, mailbox, transmog, anvil
+  </Step>
+  
+  <Step title="Set Instance Filters">
+    Under "Instance Suppression," select categories to hide only in dungeons and raids.
+    
+    <Info>
+      **Example:** Suppress mounts in instances but show them in the open world by adding "Mounts" to instance filters only.
+    </Info>
+  </Step>
+</Steps>
+
+### Customize Banner Behavior
+
+<Accordion title="Banner Timeout">
+  Set how long the banner remains visible before auto-hiding:
+  
+  - Default: 10 seconds
+  - Range: 5-60 seconds
+  - Set to 0 for no auto-hide (manual close only)
 </Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
+<Accordion title="Portal Priority">
+  When both portal and teleport spells match, prioritize showing portals:
+  
+  ```lua
+  Enable "Prefer Portals" in settings
+  ```
+  
+  This is useful for Mages who want to offer portals to party members rather than personal teleports.
 </Accordion>
 
-## Next steps
+<Accordion title="Group Announcements">
+  Automatically announce to your group when you cast a spell from a banner:
+  
+  - Announces to party/raid chat
+  - Includes spell name and target player
+  - Can be disabled in settings
+</Accordion>
 
-Now that you have your docs running, explore these key features:
+### Blacklist Noisy Keywords
+
+Prevent false positives by blacklisting words:
+
+```lua
+/noz blacklist portable, important, report
+```
+
+This prevents Nozmie from triggering when these words appear in messages.
+
+<Note>
+  View your current blacklist with `/noz blacklist` (no arguments).
+</Note>
+
+## Real-World Usage Examples
+
+### Mythic+ Dungeon Groups
+
+<Steps>
+  <Step title="Player Requests Teleport">
+    Party member types in chat:
+    ```
+    Can someone port to Mists?
+    ```
+  </Step>
+  
+  <Step title="Banner Appears">
+    Nozmie displays "Teleport: Mists of Tirna Scithe" with the spell icon.
+  </Step>
+  
+  <Step title="One-Click Cast">
+    You click the banner, and the teleport spell is cast instantly.
+  </Step>
+</Steps>
+
+### Raid Night Utilities
+
+<CodeGroup>
+```text Mage Scenario
+Raider: "need food"
+You: *Click banner*
+Nozmie casts: Conjure Refreshment
+```
+
+```text Warlock Scenario  
+Raider: "summon pls"
+You: *Click banner*  
+Nozmie casts: Ritual of Summoning
+Targets: The requesting player
+```
+
+```text Any Class Scenario
+Raider: "repair?"
+You: *Click banner*
+Nozmie uses: Repair mount or Engineering repair bot
+```
+</CodeGroup>
+
+## Essential Commands Reference
 
 <CardGroup cols={2}>
+  <Card title="/noz" icon="gear">
+    Open the settings panel
+  </Card>
+  
+  <Card title="/noz utility" icon="grid">
+    Open the Utility Page browser
+  </Card>
+  
+  <Card title="/noz minimap" icon="location-dot">
+    Toggle minimap icon visibility
+  </Card>
+  
+  <Card title="/noz last" icon="clock-rotate-left">
+    Show the last banner again
+  </Card>
+</CardGroup>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+```lua
+-- View current blacklist
+/noz blacklist
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+-- Set blacklist (comma-separated)
+/noz blacklist portable, important, teleporting
+```
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
+## Combat Behavior
 
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
+<Info>
+  When you enter combat, Nozmie banners become semi-transparent and non-interactive to prevent accidental clicks and interface taint.
+  
+  Any matches detected during combat are queued and displayed automatically when you leave combat.
+</Info>
 
+## Tips for Success
+
+<AccordionGroup>
+  <Accordion title="Keyword Matching is Intelligent">
+    Nozmie uses whole-word pattern matching:
+    - ✅ "need **portal**" → Matches portal spells
+    - ❌ "this is **portable**" → Does NOT match (prevents false positives)
+    - ✅ "tele to **orgrimmar**" → Matches Orgrimmar teleport
+  </Accordion>
+  
+  <Accordion title="Stacked Banners for Multiple Matches">
+    When multiple items match a single message, Nozmie displays all options in stacked banners.
+    
+    Navigate using arrow buttons on the banner or click the specific banner you want.
+  </Accordion>
+  
+  <Accordion title="Use Utility Page for Quick Access">
+    Bind `/noz utility` to a hotkey for instant access to all your utilities without waiting for chat triggers.
+    
+    Great for raid leaders or players who frequently provide utilities.
+  </Accordion>
+  
+  <Accordion title="Customize Per Character">
+    Nozmie settings are saved per-character, allowing different configurations:
+    - Enable all channels on support characters (Mage, Warlock)
+    - Minimal monitoring on DPS-only characters
+    - Different suppression filters for different roles
+  </Accordion>
+</AccordionGroup>
+
+## What's Next?
+
+Now that you're familiar with Nozmie basics, explore advanced features:
+
+<CardGroup cols={2}>
+  <Card title="Chat Detection" icon="comments" href="/features/chat-detection">
+    Deep dive into keyword matching and detection logic
+  </Card>
+  
+  <Card title="Banner System" icon="window" href="/features/banner-system">
+    Learn about banner customization and stacking
+  </Card>
+  
+  <Card title="Suppression Filters" icon="filter" href="/configuration/suppression-filters">
+    Master global and instance-specific filtering
+  </Card>
+  
+  <Card title="All Commands" icon="terminal" href="/features/commands">
+    Complete command reference with examples
+  </Card>
 </CardGroup>
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  **Questions or issues?** Visit the [GitHub repository](https://github.com/math-patrick/easyport) to report bugs or request features.
 </Note>

@@ -1,0 +1,189 @@
+---
+title: "Installation"
+description: "How to install the Nozmie addon in World of Warcraft"
+---
+
+## Installation Methods
+
+There are several ways to install Nozmie. Choose the method that works best for you.
+
+<CardGroup cols={2}>
+  <Card title="CurseForge App" icon="fire" iconType="duotone">
+    Recommended method with automatic updates
+  </Card>
+  
+  <Card title="Manual Installation" icon="folder-open" iconType="duotone">
+    Download and install directly from GitHub
+  </Card>
+</CardGroup>
+
+## Method 1: CurseForge App (Recommended)
+
+The CurseForge app automatically manages addon updates and is the easiest way to keep Nozmie current.
+
+<Steps>
+  <Step title="Download CurseForge">
+    Download and install the [CurseForge App](https://www.curseforge.com/download/app) if you don't already have it.
+  </Step>
+  
+  <Step title="Select World of Warcraft">
+    Open the CurseForge app and select **World of Warcraft** from the game list.
+  </Step>
+  
+  <Step title="Search for Nozmie">
+    Use the search bar to find "Nozmie: Utility Helper" or search for "teleport detection".
+  </Step>
+  
+  <Step title="Install the Addon">
+    Click the **Install** button. The addon will be automatically downloaded and installed to your WoW addons folder.
+  </Step>
+  
+  <Step title="Launch World of Warcraft">
+    Start World of Warcraft and Nozmie will be ready to use!
+  </Step>
+</Steps>
+
+<Info>
+  The CurseForge app will automatically notify you when updates are available for Nozmie.
+</Info>
+
+## Method 2: Manual Installation
+
+If you prefer to install manually or want to use the latest development version:
+
+<Steps>
+  <Step title="Download the Addon">
+    Visit the [Nozmie GitHub repository](https://github.com/math-patrick/easyport) and download the latest release.
+    
+    Click the **Code** button and select **Download ZIP**, or download a specific release from the Releases page.
+  </Step>
+  
+  <Step title="Extract the Archive">
+    Extract the downloaded ZIP file to a temporary location on your computer.
+  </Step>
+  
+  <Step title="Locate WoW Addons Folder">
+    Navigate to your World of Warcraft addons directory:
+    
+    **Windows:**
+    ```
+    C:\Program Files (x86)\World of Warcraft\_retail_\Interface\AddOns\
+    ```
+    
+    **macOS:**
+    ```
+    /Applications/World of Warcraft/_retail_/Interface/AddOns/
+    ```
+    
+    <Note>
+      If you play on Classic or Wrath servers, replace `_retail_` with `_classic_` or `_classic_era_` respectively.
+    </Note>
+  </Step>
+  
+  <Step title="Copy Nozmie Folder">
+    Copy the **Nozmie** folder from the extracted archive into your `AddOns` folder.
+    
+    The final path should look like:
+    ```
+    AddOns/Nozmie/Nozmie.toc
+    ```
+  </Step>
+  
+  <Step title="Restart World of Warcraft">
+    If WoW is running, exit completely and restart it. If WoW was closed during installation, simply launch it.
+  </Step>
+</Steps>
+
+## Verify Installation
+
+Once you've installed Nozmie, verify it's working correctly:
+
+<Steps>
+  <Step title="Check Addon List">
+    At the character selection screen, click the **AddOns** button in the bottom-left corner.
+    
+    Verify that **Nozmie: Utility Helper** appears in the list and is checked (enabled).
+  </Step>
+  
+  <Step title="Look for Minimap Icon">
+    After logging into a character, look for the Nozmie icon on your minimap.
+    
+    The icon shows the addon is loaded and ready to use.
+  </Step>
+  
+  <Step title="Test with Command">
+    Type `/noz` in the chat to open the settings panel.
+    
+    If the settings panel opens, Nozmie is successfully installed!
+  </Step>
+</Steps>
+
+<Info>
+  The Nozmie icon texture is the **Borrowed Time** spell icon and appears on your minimap by default.
+</Info>
+
+## Version Compatibility
+
+Nozmie supports multiple World of Warcraft versions:
+
+<CardGroup cols={3}>
+  <Card title="Retail" icon="sparkles">
+    Versions 11.0.2.07 through 12.0.0.01+
+  </Card>
+  
+  <Card title="The War Within" icon="swords">
+    Full support for Midnight dungeons
+  </Card>
+  
+  <Card title="Current Content" icon="trophy">
+    All current M+ seasons and raids
+  </Card>
+</CardGroup>
+
+<Note>
+  Current version: **5.0.0**  
+  Interface support: **110207, 120000, 120001**
+</Note>
+
+## Troubleshooting Installation
+
+### Addon Not Showing in List
+
+If Nozmie doesn't appear in your addon list:
+
+1. **Check the folder name** - Ensure the folder is named exactly `Nozmie` (case-sensitive on some systems)
+2. **Verify the .toc file** - Make sure `Nozmie.toc` exists in the Nozmie folder
+3. **Check AddOns path** - Confirm you placed the addon in the correct `AddOns` directory
+4. **Try "Load out of date AddOns"** - Enable this option at the character select screen if using an older WoW version
+
+### Addon Loads But Doesn't Work
+
+1. **Check for errors** - Install [BugSack](https://www.curseforge.com/wow/addons/bugsack) and [BugGrabber](https://www.curseforge.com/wow/addons/bug-grabber) to see if Nozmie is generating errors
+2. **Verify settings** - Type `/noz` and ensure the addon is enabled in the settings
+3. **Reset saved variables** - Delete the `NozmieDB` entry from your `SavedVariables.lua` file and restart WoW
+
+### Minimap Icon Missing
+
+If you don't see the minimap icon:
+
+```lua
+/noz minimap
+```
+
+This toggles the minimap icon visibility. Run it twice to turn it off and back on.
+
+<Info>
+  Need more help? Check the [Troubleshooting](/advanced/troubleshooting) guide or report issues on the [GitHub repository](https://github.com/math-patrick/easyport/issues).
+</Info>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Learn how to use Nozmie with real examples
+  </Card>
+  
+  <Card title="Commands" icon="terminal" href="/features/commands">
+    Explore all available slash commands
+  </Card>
+</CardGroup>

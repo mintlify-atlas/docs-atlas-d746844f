@@ -1,0 +1,347 @@
+---
+title: 'Chat Channel Configuration'
+description: 'Configure which chat channels Nozmie monitors for teleport requests'
+icon: 'comments'
+---
+
+## Overview
+
+Nozmie monitors specific chat channels for teleport requests and utility keywords. You can customize which channels are monitored to suit your playstyle and reduce unwanted detections.
+
+<Info>
+  Chat channel configuration uses a multi-select dropdown in the settings panel, allowing you to select multiple channels at once.
+</Info>
+
+## Available Channels
+
+Nozmie can monitor the following chat channels:
+
+<Tabs>
+  <Tab title="Say">
+    ### Say Channel
+    
+    **Event:** `CHAT_MSG_SAY`
+    
+    **Setting Value:** `"say"`
+    
+    Monitors messages in the Say channel (local area chat). Useful for responding to nearby players requesting teleports or utilities.
+    
+    <ParamField path="NozmieDB.detectChatList" type="table">
+      Include `"say"` in the array to monitor Say channel
+    </ParamField>
+    
+    **Default:** Enabled
+  </Tab>
+  
+  <Tab title="Party">
+    ### Party Channel
+    
+    **Events:** `CHAT_MSG_PARTY`, `CHAT_MSG_PARTY_LEADER`, `CHAT_MSG_INSTANCE_CHAT`
+    
+    **Setting Value:** `"party"`
+    
+    Monitors messages in Party and Instance chat. Essential for dungeon groups and small party content.
+    
+    <ParamField path="NozmieDB.detectChatList" type="table">
+      Include `"party"` in the array to monitor Party/Instance chat
+    </ParamField>
+    
+    **Default:** Enabled
+  </Tab>
+  
+  <Tab title="Raid">
+    ### Raid Channel
+    
+    **Event:** `CHAT_MSG_RAID`
+    
+    **Setting Value:** `"raid"`
+    
+    Monitors messages in Raid chat. Useful for raid groups needing teleports or class utilities.
+    
+    <ParamField path="NozmieDB.detectChatList" type="table">
+      Include `"raid"` in the array to monitor Raid chat
+    </ParamField>
+    
+    **Default:** Enabled
+  </Tab>
+  
+  <Tab title="Guild">
+    ### Guild Channel
+    
+    **Event:** `CHAT_MSG_GUILD`
+    
+    **Setting Value:** `"guild"`
+    
+    Monitors messages in Guild chat. Enable if you want to respond to guild members' requests.
+    
+    <ParamField path="NozmieDB.detectChatList" type="table">
+      Include `"guild"` in the array to monitor Guild chat
+    </ParamField>
+    
+    **Default:** Disabled
+    
+    <Warning>
+      Guild chat can be very active. Consider using suppression filters to avoid excessive detections.
+    </Warning>
+  </Tab>
+  
+  <Tab title="Whisper">
+    ### Whisper Channel
+    
+    **Events:** `CHAT_MSG_WHISPER`, `CHAT_MSG_WHISPER_INFORM`, `CHAT_MSG_BN_WHISPER`
+    
+    **Setting Value:** `"whisper"`
+    
+    Monitors whisper messages (both normal and Battle.net whispers). Useful for direct requests from specific players.
+    
+    <ParamField path="NozmieDB.detectChatList" type="table">
+      Include `"whisper"` in the array to monitor Whisper chat
+    </ParamField>
+    
+    **Default:** Enabled
+  </Tab>
+</Tabs>
+
+## Default Configuration
+
+By default, Nozmie monitors these channels:
+
+```lua
+NozmieDB.detectChatList = {"say", "party", "raid", "whisper"}
+```
+
+Guild chat is disabled by default to avoid excessive detections in busy guilds.
+
+## Legacy Settings Migration
+
+Nozmie automatically migrates from the old individual boolean settings to the new list-based system:
+
+<Note>
+  If you're upgrading from an older version, your individual channel settings will be automatically converted to the new format on first load.
+</Note>
+
+### Old Format (Deprecated)
+
+```lua
+-- These settings are no longer used
+NozmieDB.detectInSay = true
+NozmieDB.detectInParty = true
+NozmieDB.detectInRaid = true
+NozmieDB.detectInGuild = false
+NozmieDB.detectInWhisper = true
+```
+
+### New Format (Current)
+
+```lua
+-- List-based configuration
+NozmieDB.detectChatList = {"say", "party", "raid", "whisper"}
+```
+
+The migration happens automatically in `Settings.lua:208-230`:
+
+```lua
+if type(NozmieDB.detectChatList) ~= "table" then
+    local list = {}
+    if NozmieDB.detectInSay then
+        table.insert(list, "say")
+    end
+    if NozmieDB.detectInParty then
+        table.insert(list, "party")
+    end
+    -- ... (continues for all channels)
+    NozmieDB.detectChatList = list
+end
+```
+
+## Chat Event Handling
+
+Nozmie registers the following chat events defined in `Config.lua:18-19`:
+
+```lua
+CHAT_EVENTS = {
+    "CHAT_MSG_SAY",
+    "CHAT_MSG_PARTY",
+    "CHAT_MSG_PARTY_LEADER",
+    "CHAT_MSG_INSTANCE_CHAT",
+    "CHAT_MSG_RAID",
+    "CHAT_MSG_GUILD",
+    "CHAT_MSG_WHISPER",
+    "CHAT_MSG_WHISPER_INFORM",
+    "CHAT_MSG_BN_WHISPER"
+}
+```
+
+### Event to Channel Mapping
+
+The `Helpers.GetChannelFromEvent()` function maps events to channel identifiers:
+
+| Event | Channel | Output |
+|-------|---------|--------|
+| `CHAT_MSG_SAY` | Say | `"SAY"` |
+| `CHAT_MSG_PARTY`, `CHAT_MSG_PARTY_LEADER`, `CHAT_MSG_INSTANCE_CHAT` | Party | `"PARTY"` |
+| `CHAT_MSG_RAID` | Raid | `"RAID"` |
+| `CHAT_MSG_GUILD` | Guild | `"GUILD"` |
+| `CHAT_MSG_WHISPER`, `CHAT_MSG_WHISPER_INFORM` | Whisper | `"WHISPER"` |
+| `CHAT_MSG_BN_WHISPER` | Battle.net Whisper | `"BN_WHISPER"` |
+
+Reference: `Helpers.lua:63-83`
+
+## Configuring Channels
+
+### Via Settings Panel
+
+1. Open settings: **ESC** → **Options** → **Addons** → **Nozmie**
+2. Navigate to the **Chat Detection** section
+3. Click the **Chat Channels** dropdown
+4. Check or uncheck channels to monitor
+5. Settings save automatically
+
+<Info>
+  The dropdown displays a count of selected channels (e.g., "4 selected") when collapsed.
+</Info>
+
+### Programmatically
+
+```lua
+local Settings = _G.Nozmie_Settings
+
+-- Get current channel list
+local channels = Settings.Get("detectChatList")
+-- Returns: {"say", "party", "raid", "whisper"}
+
+-- Set new channel list
+Settings.Set("detectChatList", {"say", "party"})
+
+-- Add a channel
+local channels = Settings.Get("detectChatList") or {}
+table.insert(channels, "guild")
+Settings.Set("detectChatList", channels)
+
+-- Remove a channel
+local channels = Settings.Get("detectChatList") or {}
+for i, channel in ipairs(channels) do
+    if channel == "guild" then
+        table.remove(channels, i)
+        break
+    end
+end
+Settings.Set("detectChatList", channels)
+```
+
+## Message Response Behavior
+
+When you click the Announce button or use right-click options, Nozmie responds in the appropriate channel:
+
+### Channel Selection Logic
+
+<Tabs>
+  <Tab title="Whispers">
+    Responds directly to the sender via whisper
+    
+    ```lua
+    -- From Helpers.lua:94-99
+    if channel == "WHISPER" then
+        C_ChatInfo.SendChatMessage(message, channel, nil, sender)
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Group Chat">
+    Responds in the appropriate group channel (Party/Raid/Instance)
+    
+    ```lua
+    -- From Helpers.lua:53-61
+    if IsInRaid() then
+        return "RAID"
+    end
+    if IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then
+        return "INSTANCE_CHAT"
+    end
+    return "PARTY"
+    ```
+  </Tab>
+  
+  <Tab title="Other Channels">
+    Responds in the same channel where the request was detected (Say, Guild, etc.)
+  </Tab>
+</Tabs>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Small Groups" icon="users">
+    Enable: Say, Party, Raid, Whisper
+    
+    Ideal for dungeon runs and small group content.
+  </Card>
+  
+  <Card title="Solo Play" icon="user">
+    Enable: Say, Whisper
+    
+    Minimal detections while questing or in the open world.
+  </Card>
+  
+  <Card title="Guild Events" icon="shield">
+    Enable: Guild, Raid, Whisper
+    
+    Perfect for organized guild activities and raids.
+  </Card>
+  
+  <Card title="Trade/Service" icon="coins">
+    Enable: Say, Whisper
+    
+    Focused on direct requests when offering portal services.
+  </Card>
+</CardGroup>
+
+<Warning>
+  Enabling Guild chat in very active guilds may cause frequent banner popups. Consider using [suppression filters](/configuration/suppression-filters) to reduce unwanted detections.
+</Warning>
+
+## Troubleshooting
+
+### Banners Not Appearing
+
+1. Check that at least one channel is selected in Chat Channels
+2. Verify that `NozmieDB.detectChatList` is not empty
+3. Ensure the addon is enabled (`NozmieDB.enabled = true`)
+4. Confirm the message contains valid keywords or spell/item links
+
+### Too Many Detections
+
+1. Disable high-traffic channels like Guild
+2. Use [suppression filters](/configuration/suppression-filters) for specific categories
+3. Add keywords to the [blacklist](/configuration/blacklist)
+
+### Channel Not Responding
+
+If announcements don't work in a specific channel:
+
+```lua
+-- Verify the channel is accessible
+if IsInRaid() then
+    print("Can use RAID channel")
+elseif IsInGroup() then
+    print("Can use PARTY channel")
+else
+    print("Will use SAY channel")
+end
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Suppression Filters" icon="filter" href="/configuration/suppression-filters">
+    Control which categories trigger detections
+  </Card>
+  <Card title="Blacklist" icon="ban" href="/configuration/blacklist">
+    Filter messages containing specific words
+  </Card>
+  <Card title="Chat Detection Feature" icon="magnifying-glass" href="/features/chat-detection">
+    Learn how chat detection works
+  </Card>
+  <Card title="Settings Overview" icon="sliders" href="/configuration/settings">
+    View all available settings
+  </Card>
+</CardGroup>

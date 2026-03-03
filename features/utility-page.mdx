@@ -1,0 +1,484 @@
+---
+title: 'Utility Page'
+description: 'Browse and use all your teleports, utilities, and hearthstones'
+icon: 'table-cells'
+---
+
+## Overview
+
+The Utility Page provides a comprehensive browsing interface for all your available teleports, utilities, mounts, and hearthstones. Access it via `/nozui` or the minimap icon.
+
+<CodeGroup>
+```bash Slash command
+/nozui
+```
+
+```lua API
+Nozmie_UtilityUI.Show()
+Nozmie_UtilityUI.Toggle()
+```
+</CodeGroup>
+
+## Frame Structure
+
+From `UtilityUI.lua:571`:
+
+```lua
+frame = CreateFrame("Frame", "NozmieUtilityFrame", UIParent, "PortraitFrameTemplate")
+frame:SetSize(700, 470)
+frame:SetPoint("CENTER")
+frame:SetFrameStrata("HIGH")
+frame:SetMovable(true)
+frame:EnableMouse(true)
+```
+
+<Info>
+  The utility frame is **700x470 pixels**, uses a portrait template, and can be dragged to reposition.
+</Info>
+
+## Tab System
+
+### Available Tabs
+
+From `UtilityUI.lua:23`:
+
+<Tabs>
+  <Tab title="Current Dungeons">
+    M+ dungeons from the current season (priority = 1)
+    ```lua
+    if tabId == TAB_CURRENT_DUNGEONS then
+        return item.category == "M+ Dungeon" and 
+               item.priority and 
+               tonumber(item.priority) == 1
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Legacy Dungeons">
+    M+ dungeons from previous seasons (priority ≠ 1)
+    ```lua
+    elseif tabId == TAB_LEGACY_DUNGEONS then
+        return item.category == "M+ Dungeon" and 
+               (not item.priority or tonumber(item.priority) ~= 1)
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Teleports">
+    Raids, Delves, and Toy teleports
+    ```lua
+    elseif tabId == TAB_TELEPORTS then
+        return IsTeleportEntry(item) and 
+               item.category ~= "M+ Dungeon" and 
+               not IsHearthstoneEntry(item)
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Utility">
+    Utility spells and class abilities
+    ```lua
+    elseif tabId == TAB_UTILITY then
+        return item.category == "Utility" or 
+               item.category == "Class Utility"
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Hearthstones">
+    All hearthstone items and variants
+    ```lua
+    elseif tabId == TAB_HEARTHSTONE then
+        return item.category == "Home"
+    end
+    ```
+  </Tab>
+</Tabs>
+
+### Dynamic Tab Visibility
+
+From `UtilityUI.lua:137`:
+
+```lua
+local function TabHasContent(tabId)
+    for _, item in ipairs(dataCache) do
+        if MatchesFilter(item) and ItemMatchesTab(item, tabId) then
+            return true
+        end
+    end
+    return false
+end
+```
+
+<Note>
+  Tabs automatically hide if you don't have any items in that category. For example, the Hearthstones tab only appears if you own at least one hearthstone toy or item.
+</Note>
+
+## Search Functionality
+
+From `UtilityUI.lua:616`:
+
+```lua
+searchBox = CreateFrame("EditBox", nil, frame, "SearchBoxTemplate")
+searchBox:SetSize(220, 20)
+searchBox:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -24, -32)
+searchBox:SetScript("OnTextChanged", function()
+    RefreshLayout()
+end)
+```
+
+### Search Algorithm
+
+From `UtilityUI.lua:94`:
+
+```lua
+local function MatchesSearch(item, query)
+    if not query or query == "" then
+        return true
+    end
+    
+    -- Search name, spellName, destination, category
+    local text = string.lower(table.concat({
+        tostring(item.name or ""),
+        tostring(item.spellName or ""),
+        tostring(item.destination or ""),
+        tostring(item.category or "")
+    }, " "))
+    
+    if text:find(query, 1, true) then
+        return true
+    end
+    
+    -- Also search keywords
+    if item.keywords then
+        for _, keyword in ipairs(item.keywords) do
+            if type(keyword) == "string" and 
+               string.lower(keyword):find(query, 1, true) then
+                return true
+            end
+        end
+    end
+    
+    return false
+end
+```
+
+<Steps>
+  <Step title="Case-insensitive">
+    All searches are converted to lowercase
+  </Step>
+  
+  <Step title="Multiple fields">
+    Searches name, spell name, destination, and category
+  </Step>
+  
+  <Step title="Keyword matching">
+    Also searches custom keywords for each entry
+  </Step>
+  
+  <Step title="Cross-tab search">
+    When searching, all tabs are searched simultaneously
+  </Step>
+</Steps>
+
+<Info>
+  When you type in the search box, it searches across **all categories**, not just the current tab.
+</Info>
+
+## Grid Layout
+
+### Dynamic Columns
+
+From `UtilityUI.lua:346`:
+
+```lua
+local GRID_PADDING = 8
+local ROW_HEIGHT = 44
+local ICON_SIZE = 36
+
+local function LayoutButtons()
+    local width = scrollFrame:GetWidth() or 0
+    if width <= 0 then
+        width = 520  -- Fallback
+    end
+    
+    -- Calculate columns (minimum 2, maximum depends on width)
+    local columns = math.max(2, math.floor((width + GRID_PADDING) / 220))
+    
+    for index, entry in ipairs(filteredData) do
+        local x = col * (width / columns)
+        local y = row * (ROW_HEIGHT + GRID_PADDING)
+        
+        button:SetPoint("TOPLEFT", content, "TOPLEFT", x, -y)
+        button:SetWidth((width / columns) - GRID_PADDING)
+    end
+end
+```
+
+<Accordion title="Layout Calculations">
+  - **Minimum columns**: 2
+  - **Column width**: ~220 pixels
+  - **Row height**: 44 pixels + 8px padding = 52px total
+  - **Icon size**: 36x36 pixels
+  - **Grid padding**: 8 pixels between items
+</Accordion>
+
+### Button Structure
+
+From `UtilityUI.lua:200`:
+
+```lua
+local function EnsureButton(index)
+    local button = CreateFrame("Button", nil, content, "SecureActionButtonTemplate")
+    
+    button.icon = button:CreateTexture(nil, "ARTWORK")
+    button.icon:SetSize(ICON_SIZE, ICON_SIZE)
+    button.icon:SetPoint("LEFT", button, "LEFT", 14, 0)
+    
+    button.name = button:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+    button.name:SetPoint("TOPLEFT", button.icon, "TOPRIGHT", 12, -4)
+    
+    button.category = button:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    button.category:SetPoint("TOPLEFT", button.name, "BOTTOMLEFT", 0, -2)
+    
+    button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+    button.cooldown:SetAllPoints(button.icon)
+    
+    return button
+end
+```
+
+## Data Caching
+
+### Building the Cache
+
+From `UtilityUI.lua:278`:
+
+```lua
+local function BuildDataCache()
+    dataCache = {}
+    for _, item in ipairs(_G.Nozmie_Data) do
+        if (IsUtilityEntry(item) or 
+            IsTeleportEntry(item) or 
+            IsHearthstoneEntry(item)) and 
+           IsUsableUtility(item) then
+            table.insert(dataCache, item)
+        end
+    end
+    
+    -- Sort alphabetically by name
+    table.sort(dataCache, function(a, b)
+        return ConfigHelpers.GetEntryName(a) < 
+               ConfigHelpers.GetEntryName(b)
+    end)
+end
+```
+
+<Steps>
+  <Step title="Filter by category">
+    Only includes utilities, teleports, and hearthstones
+  </Step>
+  
+  <Step title="Check usability">
+    Verifies you have learned the spell or own the item
+  </Step>
+  
+  <Step title="Sort alphabetically">
+    Entries are sorted by display name
+  </Step>
+  
+  <Step title="Cache for performance">
+    Built once on frame show, reused for filtering
+  </Step>
+</Steps>
+
+### Usability Check
+
+From `UtilityUI.lua:260`:
+
+```lua
+local function IsUsableUtility(item)
+    if item.itemID then
+        if PlayerHasToy and PlayerHasToy(item.itemID) then
+            return true
+        end
+        if C_Item and C_Item.GetItemCount then
+            return C_Item.GetItemCount(item.itemID, true, false, false) > 0
+        end
+        return false
+    end
+    
+    if item.spellID and (IsSpellKnown(item.spellID) or 
+                         IsPlayerSpell(item.spellID)) then
+        return true
+    end
+    
+    return false
+end
+```
+
+## Cooldown Display
+
+From `UtilityUI.lua:435`:
+
+```lua
+if IconHandling and IconHandling.ApplyCooldownVisual then
+    IconHandling.ApplyCooldownVisual(
+        button.icon,
+        button.cooldown,
+        button.cooldownText,
+        data
+    )
+end
+```
+
+### Real-Time Updates
+
+From `UtilityUI.lua:657`:
+
+```lua
+frame:SetScript("OnUpdate", function(self, elapsed)
+    UpdateCooldowns()
+end)
+
+local function UpdateCooldowns()
+    for _, button in ipairs(buttons) do
+        if button:IsShown() and button.data then
+            IconHandling.ApplyCooldownVisual(
+                button.icon,
+                button.cooldown,
+                button.cooldownText,
+                button.data
+            )
+        end
+    end
+end
+```
+
+<Info>
+  Cooldown displays update every frame, providing accurate real-time cooldown tracking for all utilities.
+</Info>
+
+## Combat Behavior
+
+### Combat State Management
+
+From `UtilityUI.lua:48`:
+
+```lua
+local function ApplyUtilityButtonCombatState(button)
+    if IsCombatLocked() then
+        button:EnableMouse(false)
+        button:SetAlpha(0.5)
+    else
+        button:EnableMouse(true)
+        button:SetAlpha(1)
+    end
+end
+```
+
+### Combat Events
+
+From `UtilityUI.lua:665`:
+
+```lua
+frame:RegisterEvent("PLAYER_REGEN_DISABLED")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+frame:SetScript("OnEvent", function(self, event)
+    RefreshCombatButtonState()
+end)
+```
+
+<Warning>
+  During combat, all utility buttons dim to 50% opacity and disable mouse interaction to prevent taint issues. Buttons re-enable automatically when combat ends.
+</Warning>
+
+## Frame Management
+
+### ESC Key Support
+
+From `UtilityUI.lua:671`:
+
+```lua
+if type(UISpecialFrames) == "table" then
+    table.insert(UISpecialFrames, "NozmieUtilityFrame")
+end
+```
+
+<Note>
+  The utility frame can be closed with the ESC key thanks to `UISpecialFrames` registration.
+</Note>
+
+### OnShow Behavior
+
+From `UtilityUI.lua:651`:
+
+```lua
+frame:SetScript("OnShow", function()
+    BuildDataCache()
+    RefreshLayout()
+    RefreshCombatButtonState()
+end)
+```
+
+<Steps>
+  <Step title="Rebuild cache">
+    Checks for newly learned spells/acquired items
+  </Step>
+  
+  <Step title="Refresh layout">
+    Updates tab visibility and grid layout
+  </Step>
+  
+  <Step title="Apply combat state">
+    Ensures correct button state based on combat status
+  </Step>
+</Steps>
+
+## Performance Optimization
+
+### Lazy Button Creation
+
+Buttons are created on-demand and reused:
+
+```lua
+local function EnsureButton(index)
+    if buttons[index] then
+        return buttons[index]  -- Reuse existing
+    end
+    -- Create new button only if needed
+    local button = CreateFrame(...)
+    buttons[index] = button
+    return button
+end
+```
+
+### Efficient Filtering
+
+From `UtilityUI.lua:304`:
+
+```lua
+local function BuildFilteredData()
+    filteredData = {}
+    
+    -- If searching, search all items
+    if query and query ~= "" then
+        for _, item in ipairs(dataCache) do
+            if MatchesSearch(item, query) then
+                table.insert(filteredData, item)
+            end
+        end
+    else
+        -- Otherwise filter by active tab
+        for _, item in ipairs(dataCache) do
+            if ItemMatchesTab(item, selectedTab) then
+                table.insert(filteredData, item)
+            end
+        end
+    end
+end
+```
+
+<Info>
+  The utility page uses efficient data structures and lazy loading to maintain smooth performance even with hundreds of teleport options.
+</Info>

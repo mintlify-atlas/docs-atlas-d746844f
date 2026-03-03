@@ -1,0 +1,239 @@
+---
+title: 'Chat Detection'
+description: 'How Nozmie monitors chat channels and detects teleport requests'
+icon: 'comments'
+---
+
+## Overview
+
+Nozmie automatically monitors chat messages across multiple channels to detect when players request teleports, portals, or utilities. The detection system uses keyword matching and intelligent filtering to identify relevant requests.
+
+## Monitored Chat Channels
+
+By default, Nozmie monitors the following chat channels:
+
+<Tabs>
+  <Tab title="Default Channels">
+    - **Say** (`CHAT_MSG_SAY`)
+    - **Party** (`CHAT_MSG_PARTY`, `CHAT_MSG_PARTY_LEADER`, `CHAT_MSG_INSTANCE_CHAT`)
+    - **Raid** (`CHAT_MSG_RAID`)
+    - **Whisper** (`CHAT_MSG_WHISPER`, `CHAT_MSG_WHISPER_INFORM`)
+    - **Battle.net Whisper** (`CHAT_MSG_BN_WHISPER`)
+  </Tab>
+  <Tab title="Optional Channels">
+    - **Guild** (`CHAT_MSG_GUILD`) - disabled by default
+  </Tab>
+</Tabs>
+
+<Note>
+  You can customize which channels to monitor in the settings panel under **Chat Detection**.
+</Note>
+
+## How Detection Works
+
+### Keyword Matching
+
+Nozmie uses a sophisticated keyword matching algorithm that:
+
+<Steps>
+  <Step title="Normalize the message">
+    Converts the message to lowercase for case-insensitive matching
+    ```lua
+    local normalizedMessage = message:lower()
+    ```
+  </Step>
+  
+  <Step title="Word boundary detection">
+    Uses Lua pattern matching to ensure whole-word matches only
+    ```lua
+    local pattern = "%f[%w]" .. EscapePattern(normalizedKeyword) .. "%f[%W]"
+    return normalizedMessage:find(pattern) ~= nil
+    ```
+  </Step>
+  
+  <Step title="Link detection">
+    Automatically detects spell and item links in chat
+    ```lua
+    -- Matches |Hitem:3577:0:0:276308480|h and |Hspell:12345|h
+    for linkType, id in message:gmatch("|H(%a+):(%d+):.-|h") do
+        idsInMessage[tonumber(id)] = true
+    end
+    ```
+  </Step>
+</Steps>
+
+### Detection Algorithm
+
+From `Detector.lua:109`:
+
+```lua
+function Detector.FindMatchingTeleports(message, sender)
+    local lowerMessage = message:lower()
+    local matches, hearthstones, currents = {}, {}, {}
+    
+    -- Check blacklist first
+    if blacklist ~= "" then
+        for word in blacklist:gmatch("([^,]+)") do
+            local trimmedWord = word:match("^%s*(.-)%s*$"):lower()
+            if trimmedWord ~= "" and lowerMessage:find(trimmedWord, 1, true) then
+                return {}  -- Blocked by blacklist
+            end
+        end
+    end
+    
+    -- Match against all teleport data
+    for _, teleportData in ipairs(Nozmie_Data) do
+        -- Match by spell/item ID or keywords
+        if matched and Helpers.CanPlayerUseUtility(teleportData) then
+            -- Apply suppression filters
+            if not ShouldSuppressOption(teleportData, Settings, inInstance) then
+                table.insert(matches, teleportCopy)
+            end
+        end
+    end
+    
+    return result
+end
+```
+
+## Filtering & Suppression
+
+### Blacklist Words
+
+Messages containing blacklisted words are completely ignored:
+
+<CodeGroup>
+```bash Set via command
+/noz blacklist summon, lfg, boost
+```
+
+```bash View current blacklist
+/noz blacklist
+```
+</CodeGroup>
+
+<Info>
+  Blacklisted words are matched as substrings anywhere in the message. Use carefully to avoid blocking legitimate requests.
+</Info>
+
+### Suppression Filters
+
+From `Detector.lua:68`, suppression filters prevent specific categories from appearing:
+
+<Accordion title="Suppression Categories">
+  - **mount** - Mount utilities
+  - **class** - Class-specific utilities
+  - **teleports** - Portals, Teleports, M+ Dungeons, Raids, Delves, Hearthstones
+  - **utilityservice** - Utility spells and services (Mail, Repair, Transmog)
+</Accordion>
+
+<Tabs>
+  <Tab title="Global Suppression">
+    Applies everywhere, regardless of location
+    ```lua
+    if ShouldSuppressByList(settings.Get("suppressGlobalList"), keys) then
+        return true
+    end
+    ```
+  </Tab>
+  
+  <Tab title="Instance Suppression">
+    Only applies when inside dungeons, raids, or scenarios
+    ```lua
+    if inInstance and ShouldSuppressByList(settings.Get("suppressInstanceList"), keys) then
+        return true
+    end
+    ```
+  </Tab>
+</Tabs>
+
+## Target Detection
+
+Nozmie can detect when utility spells are requested for specific players:
+
+```lua
+-- Player/instance context
+local targetPlayer = sender and sender:match("([^-]+)") or sender
+local playerName = UnitName("player")
+if playerName and targetPlayer == playerName then
+    targetPlayer = nil
+end
+```
+
+Utility spells like **Levitate** and **Slow Fall** will automatically target the requesting player.
+
+## Priority & Sorting
+
+From `Detector.lua:194`, matches are sorted intelligently:
+
+<Steps>
+  <Step title="Current location first">
+    Options marked as `current` appear first
+  </Step>
+  
+  <Step title="Ready abilities">
+    Abilities with no cooldown are prioritized
+  </Step>
+  
+  <Step title="Hearthstones">
+    Hearthstone options are randomized to add variety
+  </Step>
+  
+  <Step title="Cooldown abilities last">
+    Abilities on cooldown appear at the end
+  </Step>
+</Steps>
+
+### Portal Preference
+
+If enabled in settings, portals are prioritized over teleports:
+
+```lua
+local preferPortals = Settings and Settings.Get and Settings.Get("preferPortals")
+
+local function sortPriority(a, b)
+    if preferPortals then
+        local aPortal = a.spellName and a.spellName:find("^Portal:")
+        local bPortal = b.spellName and b.spellName:find("^Portal:")
+        if aPortal and not bPortal then return true end
+        if bPortal and not aPortal then return false end
+    end
+    -- Then sort by priority field
+end
+```
+
+## Anti-Spam Protection
+
+From `Init.lua:102`, Nozmie includes anti-spam protection:
+
+```lua
+local senderShort = sender:match("([^-]+)") or sender
+if senderShort == playerName and Helpers.IsRecentAnnounce(message) then
+    return false  -- Ignore your own announcements
+end
+```
+
+<Warning>
+  Nozmie will not trigger on messages you recently announced yourself to prevent feedback loops.
+</Warning>
+
+## Combat Handling
+
+During combat, matches are queued and shown when combat ends:
+
+```lua
+if InCombatLockdown() then
+    QueueMatches(matches)
+    return false
+end
+
+-- When combat ends:
+addon:RegisterEvent("PLAYER_REGEN_ENABLED")
+if #pendingMatches > 0 and Settings.Get("showBanner") then
+    BannerController.ShowWithOptions(banner, pendingMatches)
+end
+```
+
+<Info>
+  This ensures Nozmie never interferes with combat mechanics or causes taint issues.
+</Info>

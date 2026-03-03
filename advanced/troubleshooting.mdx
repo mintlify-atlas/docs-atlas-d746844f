@@ -1,0 +1,314 @@
+---
+title: "Troubleshooting"
+description: "Common issues, solutions, and frequently asked questions"
+---
+
+## Common Issues
+
+### Banner Not Showing
+
+<AccordionGroup>
+  <Accordion title="Check if Nozmie is enabled">
+    **Solution**: Verify that the addon is enabled in Settings.
+    
+    <Steps>
+      <Step title="Open Settings">
+        Type `/noz` or `/nozmie` in chat
+      </Step>
+      <Step title="Check General Section">
+        Ensure **Enable Nozmie** is checked
+      </Step>
+      <Step title="Check Banner Setting">
+        Verify **Show Banner** is enabled under Banner section
+      </Step>
+    </Steps>
+  </Accordion>
+
+  <Accordion title="Chat detection channels not configured">
+    **Solution**: Configure which chat channels Nozmie monitors.
+    
+    1. Open Settings with `/noz`
+    2. Navigate to **Chat Detection** section
+    3. Select channels: Say, Party, Raid, Guild, Whisper
+    4. At least one channel must be selected for detection to work
+    
+    <Tip>
+    By default, Say, Party, Raid, and Whisper are enabled.
+    </Tip>
+  </Accordion>
+
+  <Accordion title="Category suppressed globally or in instances">
+    **Solution**: Check suppression filters.
+    
+    If you're in a dungeon or raid, the category might be suppressed:
+    - Open Settings → Suppression Filters
+    - Check **Global Suppressions** (applies everywhere)
+    - Check **Instance Suppressions** (dungeons/raids only)
+    - Remove categories you want to see
+  </Accordion>
+
+  <Accordion title="Keyword doesn't match">
+    **Solution**: Use exact whole-word matches.
+    
+    Nozmie uses whole-word detection to prevent false positives:
+    
+    ✅ **Works**: "need port", "summon", "food table"  
+    ❌ **Won't work**: "portable" (contains "port"), "summons" (plural)
+    
+    Try different keywords like location names or spell names.
+  </Accordion>
+</AccordionGroup>
+
+### Banner Won't Move
+
+<Warning>
+**Combat Lockdown**: You cannot move the banner during combat due to Blizzard's security restrictions.
+</Warning>
+
+**Solution**: Wait until combat ends, then drag the banner using the drag icon (📌).
+
+If the drag icon is missing:
+1. Type `/noz` to open Settings
+2. Go to **Appearance** section
+3. Uncheck **Hide Drag Icon**
+
+### Minimap Icon Missing
+
+<Steps>
+  <Step title="Check Minimap Icon Setting">
+    Type `/noz` and go to **Appearance → Minimap Icon**
+  </Step>
+  <Step title="Or Use Slash Command">
+    Type `/noz minimap` to toggle visibility
+  </Step>
+  <Step title="Reload UI">
+    If the icon still doesn't appear, reload with `/reload`
+  </Step>
+</Steps>
+
+### Cooldown Not Updating
+
+If cooldown timers are stuck or incorrect:
+
+1. **Close and reopen the banner**: Click the close button and trigger a new detection
+2. **Check spell/item availability**: Some spells may be on global cooldown (GCD)
+3. **Reload UI**: Type `/reload` to reset cooldown tracking
+
+<Note>
+Cooldown tracking updates every 0.5 seconds while a banner is visible.
+</Note>
+
+### Can't Click Banner in Combat
+
+This is expected behavior due to Blizzard's combat restrictions:
+
+- Banner dims to 20% opacity during combat
+- All interactions are disabled (clicking, dragging, closing)
+- Banner becomes interactive again when combat ends
+
+**Workaround**: Preemptively click the banner before engaging in combat.
+
+## Detection Issues
+
+### Spell Not Detected
+
+<Accordion title="Player doesn't own the spell or item">
+**Most common cause**: Nozmie only shows utilities you actually possess.
+
+Check if you:
+- Know the spell (for class abilities)
+- Own the item or toy
+- Have the mount collected
+- Meet profession requirements
+</Accordion>
+
+<Accordion title="Keyword not in database">
+**Solution**: Use alternative keywords or exact spell names.
+
+Try variations like:
+- Full location names: "Darnassus" instead of "Darn"
+- Spell names: "Ritual of Summoning"
+- Common abbreviations: "SW" for Stormwind
+</Accordion>
+
+<Accordion title="Message contains blacklisted words">
+**Solution**: Check your blacklist.
+
+View current blacklist:
+```bash
+/noz blacklist
+```
+
+Clear or update blacklist:
+```bash
+/noz blacklist word1, word2, word3
+```
+
+Set empty blacklist:
+```bash
+/noz blacklist
+```
+</Accordion>
+
+### Wrong Language Detection
+
+<Warning>
+Nozmie currently uses English keywords for dungeon names and some locations. Full localized dungeon detection is planned for future updates.
+</Warning>
+
+**Workaround**: Use English keywords for dungeons and locations even in non-English clients.
+
+## Performance Issues
+
+### UI Lag or Stuttering
+
+<Steps>
+  <Step title="Reduce Banner Timeout">
+    Lower the auto-hide timeout to reduce active banner count:
+    Settings → Banner → Banner Timeout (set to 3-5 seconds)
+  </Step>
+  <Step title="Disable Auto-Hide">
+    If you prefer manual control, disable auto-hide entirely:
+    Settings → Banner → Auto-hide Banner (uncheck)
+  </Step>
+  <Step title="Suppress Unnecessary Categories">
+    Reduce detection overhead by suppressing unused categories:
+    Settings → Suppression Filters → select categories to hide
+  </Step>
+</Steps>
+
+### Memory Usage
+
+Nozmie is lightweight, but if you experience memory issues:
+
+1. Disable in instances where not needed (use Instance Suppressions)
+2. Reduce number of monitored chat channels
+3. Check for conflicts with other chat-monitoring addons
+
+## Compatibility Issues
+
+### Conflicts with Other Addons
+
+<AccordionGroup>
+  <Accordion title="Chat addons (Prat, WIM, etc.)">
+    **Solution**: Nozmie listens to native chat events and should work with most chat addons. If issues occur:
+    
+    - Ensure chat addons aren't filtering out system messages
+    - Try disabling chat addon's "whisper handling" if it conflicts
+    - Report compatibility issues on GitHub
+  </Accordion>
+
+  <Accordion title="Action bar addons (Bartender, ElvUI, etc.)">
+    **Solution**: Secure button conflicts may occur in combat.
+    
+    If you can't click the banner:
+    - Move the banner away from action bars
+    - Ensure banner is not overlapping ElvUI panels
+    - Try disabling "clamp to screen" in action bar addons
+  </Accordion>
+
+  <Accordion title="Minimap addons (SexyMap, Square Minimap, etc.)">
+    **Solution**: Minimap icon positioning may conflict.
+    
+    - Hide Nozmie's minimap icon: `/noz minimap`
+    - Use slash commands instead: `/noz` for settings, `/noz last` for last banner
+    - Report specific addon conflicts for future compatibility
+  </Accordion>
+</AccordionGroup>
+
+## Database Issues
+
+### Settings Not Saving
+
+If settings reset after logout:
+
+<Steps>
+  <Step title="Check SavedVariables">
+    Ensure `NozmieDB` is being saved. Exit the game fully (not just logout to character screen).
+  </Step>
+  <Step title="Verify File Permissions">
+    Check that WoW can write to:
+    `WTF/Account/ACCOUNT_NAME/SavedVariables/Nozmie.lua`
+  </Step>
+  <Step title="Delete Corrupted Data">
+    If database is corrupted, delete `Nozmie.lua` from SavedVariables and restart WoW. Settings will reset to defaults.
+  </Step>
+</Steps>
+
+### Reset to Defaults
+
+To manually reset all settings:
+
+1. Exit World of Warcraft completely
+2. Navigate to `WTF/Account/ACCOUNT_NAME/SavedVariables/`
+3. Delete or rename `Nozmie.lua`
+4. Restart WoW
+5. Reconfigure settings with `/noz`
+
+## Frequently Asked Questions
+
+<AccordionGroup>
+  <Accordion title="Why doesn't Nozmie detect my class portal?">
+    **Answer**: Ensure you have learned the spell. Nozmie only detects spells, items, and toys you actually possess. Check your spellbook to verify the spell is available.
+  </Accordion>
+
+  <Accordion title="Can I customize the banner colors?">
+    **Answer**: Currently, banner colors are hardcoded in `Config.lua`. Custom color themes may be added in a future update. Feel free to request this feature on GitHub.
+  </Accordion>
+
+  <Accordion title="Does Nozmie support localized dungeon names?">
+    **Answer**: Partial support. UI text is fully localized, but keyword detection for dungeons currently uses English names. Full localization is on the roadmap.
+  </Accordion>
+
+  <Accordion title="Why can't I see mount or toy utilities?">
+    **Answer**: Check suppression filters. Mounts and toys may be suppressed globally or in instances. Also verify you own the mount/toy in your collection.
+  </Accordion>
+
+  <Accordion title="Can I disable specific spell categories?">
+    **Answer**: Yes! Use the Suppression Filters in Settings. You can suppress:
+    - Mounts
+    - Class Utilities  
+    - Teleports & Portals
+    - Utility Services
+    
+    Apply these globally or only in instances.
+  </Accordion>
+
+  <Accordion title="How do I report a bug or request a feature?">
+    **Answer**: Visit the [GitHub repository](https://github.com/YOUR_REPO/nozmie) and open an issue. Provide:
+    - Nozmie version
+    - WoW client version and locale
+    - Steps to reproduce the issue
+    - Any error messages from BugSack or similar addons
+  </Accordion>
+
+  <Accordion title="Why does the banner fade during combat?">
+    **Answer**: Blizzard's combat security system prevents interaction with certain UI elements during combat. Nozmie dims the banner to 20% opacity and disables clicks to comply with these restrictions. Full functionality returns when combat ends.
+  </Accordion>
+
+  <Accordion title="Can I use Nozmie with WeakAuras or TellMeWhen?">
+    **Answer**: Yes, Nozmie doesn't conflict with aura addons. They operate on different systems. However, avoid creating custom WeakAuras that interact with Nozmie's buttons during combat.
+  </Accordion>
+</AccordionGroup>
+
+## Getting Help
+
+If you're still experiencing issues:
+
+<CardGroup cols={2}>
+  <Card title="GitHub Issues" icon="github" href="https://github.com/YOUR_REPO/nozmie/issues">
+    Report bugs or request features
+  </Card>
+  <Card title="Discord Community" icon="discord" href="https://discord.gg/YOUR_INVITE">
+    Get help from other users
+  </Card>
+</CardGroup>
+
+<Tip>
+When reporting issues, include:
+- Nozmie version (check .toc file)
+- WoW client version and locale
+- List of other installed addons
+- Steps to reproduce the problem
+- Screenshots or error messages
+</Tip>
