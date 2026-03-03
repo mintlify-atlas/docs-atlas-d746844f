@@ -65,7 +65,7 @@
   ],
   "publicApiSurface": [
     "/noz or /nozmie - Open settings panel",
-    "/noz utility - Open utility page browser",
+    "/nozui - Open utility page browser",
     "/noz minimap - Toggle minimap icon",
     "/noz last - Display last banner",
     "/noz blacklist - Manage blacklisted words",
